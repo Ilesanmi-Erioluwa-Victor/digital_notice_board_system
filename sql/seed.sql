@@ -9,22 +9,22 @@
 -- The hashes below correspond to "password123" for all test accounts.
 INSERT INTO users (name, email, password_hash, role) VALUES
     ('Super Admin', 'admin@example.com',
-     '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+     '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
      'super_admin'),
     ('Department Admin', 'deptadmin@example.com',
-     '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+     '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
      'admin'),
     ('Admin User Two', 'admin2@example.com',
-     '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+     '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
      'admin'),
     ('John Viewer', 'viewer@example.com',
-     '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+     '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
      'viewer'),
     ('Jane Viewer', 'jane@example.com',
-     '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+     '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
      'viewer'),
     ('Bob Viewer', 'bob@example.com',
-     '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+     '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
      'viewer');
 
 -- ─── Categories ────────────────────────────────────────────────────────────
