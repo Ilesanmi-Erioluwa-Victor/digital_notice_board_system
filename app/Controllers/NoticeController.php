@@ -291,7 +291,7 @@ class NoticeController
         }
 
         // Generate unique filename and move to uploads directory
-        $uploadDir = __DIR__ . '/../../assets/uploads/';
+        $uploadDir = __DIR__ . '/../../public/assets/uploads/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }

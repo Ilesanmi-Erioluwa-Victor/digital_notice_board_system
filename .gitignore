@@ -2,5 +2,7 @@ vendor/
 .env
 /assets/uploads/*
 !/assets/uploads/.gitkeep
+/public/assets/uploads/*
+!/public/assets/uploads/.gitkeep
 *.log
 .DS_Store

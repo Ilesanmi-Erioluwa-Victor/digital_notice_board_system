@@ -31,8 +31,8 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --no-interaction --optimize-autoloader
 
-# Set permissions for uploads directory
-RUN mkdir -p assets/uploads && chmod -R 775 assets/uploads
+# Set permissions for uploads directory (inside web root for direct access)
+RUN mkdir -p public/assets/uploads && chmod -R 775 public/assets/uploads
 
 # Set proper ownership
 RUN chown -R www-data:www-data /var/www/html
