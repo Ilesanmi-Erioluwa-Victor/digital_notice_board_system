@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=digital_notice_board
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - APP_URL=http://localhost:8000
+      - SESSION_SECRET=change-this-to-a-random-secret-string
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./assets/uploads:/var/www/html/assets/uploads
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=digital_notice_board
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./sql/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

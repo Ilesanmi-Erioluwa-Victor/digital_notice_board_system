@@ -1,0 +1,227 @@
+/* ==========================================================================
+   ADMIN-SPECIFIC STYLES
+   Overrides and additional components for the admin panel
+   ========================================================================== */
+
+/* ─── Sidebar ──────────────────────────────────────────── */
+
+.admin-sidebar {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.admin-sidebar .sidebar-heading {
+  padding: 1rem 1.25rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  background: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-sidebar .sidebar-nav {
+  list-style: none;
+}
+
+.admin-sidebar .sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  border-left: 3px solid transparent;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.admin-sidebar .sidebar-nav a:hover {
+  background: var(--color-background);
+}
+
+.admin-sidebar .sidebar-nav a.active {
+  background: #eff6ff;
+  border-left-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ─── Notice Table ─────────────────────────────────────── */
+
+.notice-table .action-cell {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+/* ─── Notice Form ──────────────────────────────────────── */
+
+.notice-form-wrapper {
+  max-width: 800px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ─── Activity Log ─────────────────────────────────────── */
+
+.log-entry {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.87rem;
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+}
+
+.log-entry .log-time {
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  font-size: 0.8rem;
+  min-width: 80px;
+}
+
+.log-entry .log-action {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.log-entry .log-details {
+  color: var(--color-text-secondary);
+}
+
+/* ─── User Management ──────────────────────────────────── */
+
+.role-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.role-super-admin {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.role-admin {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.role-viewer {
+  background: var(--color-background);
+  color: var(--color-text-secondary);
+}
+
+/* ─── Page Header ──────────────────────────────────────── */
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+  font-size: 1.5rem;
+}
+
+/* ─── Responsive Admin ─────────────────────────────────── */
+
+@media (max-width: 639px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-sidebar .sidebar-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  .admin-sidebar .sidebar-nav a {
+    flex: 1 1 50%;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    justify-content: center;
+    padding: 0.6rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .admin-sidebar .sidebar-nav a.active {
+    border-left-color: transparent;
+    border-bottom-color: var(--color-primary);
+  }
+
+  /* Card-based mobile table rows */
+  .notice-table table,
+  .notice-table thead,
+  .notice-table tbody,
+  .notice-table th,
+  .notice-table td,
+  .notice-table tr {
+    display: block;
+  }
+
+  .notice-table thead {
+    display: none;
+  }
+
+  .notice-table tr {
+    margin-bottom: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    background: var(--color-surface);
+  }
+
+  .notice-table td {
+    border: none;
+    padding: 0.3rem 0;
+    font-size: 0.85rem;
+  }
+
+  .notice-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    display: inline-block;
+    width: 100px;
+    color: var(--color-text-secondary);
+    font-size: 0.78rem;
+  }
+
+  .notice-table .action-cell {
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--color-border);
+    margin-top: 0.5rem;
+  }
+
+  .notice-table .action-cell::before {
+    display: none;
+  }
+}

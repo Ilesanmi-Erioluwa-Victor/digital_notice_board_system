@@ -1,0 +1,6 @@
+vendor/
+.env
+/assets/uploads/*
+!/assets/uploads/.gitkeep
+*.log
+.DS_Store
