@@ -4,6 +4,9 @@
 -- Run: psql -d digital_notice_board -f sql/seed.sql
 -- ==========================================================================
 
+-- Clear existing data and reset auto-increment sequences
+TRUNCATE users, categories, notices, attachments, activity_logs RESTART IDENTITY CASCADE;
+
 -- ─── Users ─────────────────────────────────────────────────────────────────
 -- Passwords are hashed with password_hash('password123', PASSWORD_DEFAULT).
 -- The hashes below correspond to "password123" for all test accounts.
