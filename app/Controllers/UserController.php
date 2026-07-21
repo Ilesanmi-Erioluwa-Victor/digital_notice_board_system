@@ -25,9 +25,9 @@ class UserController
     {
         Auth::requireAuth(['super_admin']);
         $users = $this->userModel->all();
-        require __DIR__ . '/../views/layouts/header.php';
-        require __DIR__ . '/../views/admin/users.php';
-        require __DIR__ . '/../views/layouts/footer.php';
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/admin/users.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
     }
 
     /**

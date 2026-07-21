@@ -64,8 +64,8 @@ class DashboardController
         // Recent activity log
         $recentLogs = $this->logModel->getRecent(10);
 
-        require __DIR__ . '/../views/layouts/header.php';
-        require __DIR__ . '/../views/admin/dashboard.php';
-        require __DIR__ . '/../views/layouts/footer.php';
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/admin/dashboard.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
     }
 }

@@ -25,8 +25,8 @@ class ActivityLogController
     {
         Auth::requireAuth(['super_admin', 'admin']);
         $logs = $this->logModel->getRecent(100);
-        require __DIR__ . '/../views/layouts/header.php';
-        require __DIR__ . '/../views/admin/logs.php';
-        require __DIR__ . '/../views/layouts/footer.php';
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/admin/logs.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
     }
 }

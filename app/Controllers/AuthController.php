@@ -20,9 +20,9 @@ class AuthController
             header('Location: /admin/dashboard');
             exit;
         }
-        require __DIR__ . '/../views/layouts/header.php';
-        require __DIR__ . '/../views/public/login.php';
-        require __DIR__ . '/../views/layouts/footer.php';
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/public/login.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
     }
 
     /**
@@ -72,10 +72,10 @@ class AuthController
      */
     public function registerForm(array $params = []): void
     {
-        require __DIR__ . '/../views/layouts/header.php';
+        require __DIR__ . '/../Views/layouts/header.php';
         // Registration form would go here
         echo '<div class="container"><h1>Register</h1><p>Self-registration is available for viewer accounts only.</p></div>';
-        require __DIR__ . '/../views/layouts/footer.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
     }
 
     /**

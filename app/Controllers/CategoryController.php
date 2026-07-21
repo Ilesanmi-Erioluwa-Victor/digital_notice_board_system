@@ -25,9 +25,9 @@ class CategoryController
     {
         Auth::requireAuth(['super_admin', 'admin']);
         $categories = $this->categoryModel->all();
-        require __DIR__ . '/../views/layouts/header.php';
-        require __DIR__ . '/../views/admin/categories.php';
-        require __DIR__ . '/../views/layouts/footer.php';
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/admin/categories.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
     }
 
     /**

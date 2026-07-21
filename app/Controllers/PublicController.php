@@ -31,9 +31,9 @@ class PublicController
     {
         $notices    = $this->noticeModel->getActive();
         $categories = $this->categoryModel->all();
-        require __DIR__ . '/../views/layouts/header.php';
-        require __DIR__ . '/../views/public/home.php';
-        require __DIR__ . '/../views/layouts/footer.php';
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/public/home.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
     }
 
     /**
@@ -46,16 +46,16 @@ class PublicController
         $notice = $this->noticeModel->findById($id);
         if (!$notice) {
             http_response_code(404);
-            require __DIR__ . '/../views/layouts/header.php';
+            require __DIR__ . '/../Views/layouts/header.php';
             echo '<div class="container"><div class="card"><div class="card-body"><h1>Notice Not Found</h1><p>The requested notice does not exist or has been removed.</p><a href="/" class="btn btn-primary mt-2">Back to Home</a></div></div></div>';
-            require __DIR__ . '/../views/layouts/footer.php';
+            require __DIR__ . '/../Views/layouts/footer.php';
             return;
         }
 
         $attachments = $this->attachmentModel->findByNoticeId($id);
-        require __DIR__ . '/../views/layouts/header.php';
-        require __DIR__ . '/../views/public/notice-detail.php';
-        require __DIR__ . '/../views/layouts/footer.php';
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/public/notice-detail.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
     }
 
     /**
@@ -66,6 +66,6 @@ class PublicController
     public function kiosk(array $params = []): void
     {
         // Kiosk has its own full-screen layout (no header/footer)
-        require __DIR__ . '/../views/public/kiosk.php';
+        require __DIR__ . '/../Views/public/kiosk.php';
     }
 }

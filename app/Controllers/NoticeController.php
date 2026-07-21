@@ -46,9 +46,9 @@ class NoticeController
         $categories = $this->categoryModel->all();
 
         extract($result);
-        require __DIR__ . '/../views/layouts/header.php';
-        require __DIR__ . '/../views/admin/notices-list.php';
-        require __DIR__ . '/../views/layouts/footer.php';
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/admin/notices-list.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
     }
 
     /**
@@ -59,9 +59,9 @@ class NoticeController
     {
         Auth::requireAuth(['super_admin', 'admin']);
         $categories = $this->categoryModel->all();
-        require __DIR__ . '/../views/layouts/header.php';
-        require __DIR__ . '/../views/admin/notice-form.php';
-        require __DIR__ . '/../views/layouts/footer.php';
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/admin/notice-form.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
     }
 
     /**
@@ -118,9 +118,9 @@ class NoticeController
         }
         $categories = $this->categoryModel->all();
         $attachments = $this->attachmentModel->findByNoticeId($id);
-        require __DIR__ . '/../views/layouts/header.php';
-        require __DIR__ . '/../views/admin/notice-form.php';
-        require __DIR__ . '/../views/layouts/footer.php';
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/admin/notice-form.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
     }
 
     /**
