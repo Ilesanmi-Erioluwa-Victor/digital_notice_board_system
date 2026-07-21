@@ -199,8 +199,10 @@ class Notice
 
         $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
+        // Count query uses only filter params, NOT limit/offset
+        $countParams = array_diff_key($params, ['limit' => true, 'offset' => true]);
         $countSql = 'SELECT COUNT(*) AS total FROM notices n ' . $whereClause;
-        $countResult = $this->db->fetchOne($countSql, $params);
+        $countResult = $this->db->fetchOne($countSql, $countParams);
         $total = (int) ($countResult['total'] ?? 0);
 
         $dataSql = 'SELECT n.*, c.name AS category_name, u.name AS author_name
