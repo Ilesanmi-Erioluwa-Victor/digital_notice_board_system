@@ -1,8 +1,12 @@
 FROM php:8.2-apache
 
-# Install PostgreSQL PDO extension
-RUN apt-get update && apt-get install -y libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql
+# Install system dependencies: PostgreSQL client, zip/unzip for Composer, git
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    zip \
+    unzip \
+    git \
+    && docker-php-ext-install pdo pdo_pgsql zip
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
