@@ -19,7 +19,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./assets/uploads:/var/www/html/assets/uploads
+      - ./public/assets/uploads:/var/www/html/public/assets/uploads
 
   db:
     image: postgres:15-alpine
