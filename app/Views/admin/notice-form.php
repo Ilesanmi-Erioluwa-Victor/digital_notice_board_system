@@ -67,15 +67,30 @@
                                 <option value="pending" <?= (isset($notice) && ($notice['status'] ?? '') === 'pending') ? 'selected' : '' ?>>Pending</option>
                                 <?php if (isset($isAdmin) && $isAdmin): ?>
                                     <option value="approved" <?= (isset($notice) && ($notice['status'] ?? '') === 'approved') ? 'selected' : '' ?>>Approved</option>
-                                    <option value="published" <?= (isset($notice) && ($notice['status'] ?? '') === 'published') ? 'selected' : '' ?>>Published</option>
+                                    <option value="published" <?= (isset($notice) && ($notice['status'] ?? '') === 'published') ? 'selected' : '' ?> selected>Published</option>
                                 <?php endif; ?>
                                 <option value="archived" <?= (isset($notice) && ($notice['status'] ?? '') === 'archived') ? 'selected' : '' ?>>Archived</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="publish_at">Publish At</label>
-                            <input type="datetime-local" id="publish_at" name="publish_at" class="form-control"
-                                   value="<?= isset($notice['publish_at']) ? date('Y-m-d\TH:i', strtotime($notice['publish_at'])) : '' ?>">
+                            <label>Publishing</label>
+                            <div style="display:flex;gap:0.75rem;padding-top:0.35rem;">
+                                <label class="checkbox-label" style="font-weight:500;">
+                                    <input type="radio" name="publish_choice" value="now"
+                                           <?= (!isset($notice) || empty($notice['publish_at']) || date('Y-m-d\TH:i', strtotime($notice['publish_at'])) <= date('Y-m-d\TH:i')) ? 'checked' : '' ?>
+                                           onchange="document.getElementById('publish_at').disabled=true;document.getElementById('publish_at').value='';">
+                                    Post Now
+                                </label>
+                                <label class="checkbox-label" style="font-weight:500;">
+                                    <input type="radio" name="publish_choice" value="schedule"
+                                           <?= (isset($notice) && !empty($notice['publish_at']) && date('Y-m-d\TH:i', strtotime($notice['publish_at'])) > date('Y-m-d\TH:i')) ? 'checked' : '' ?>
+                                           onchange="document.getElementById('publish_at').disabled=false;">
+                                    Schedule
+                                </label>
+                            </div>
+                            <input type="datetime-local" id="publish_at" name="publish_at" class="form-control" style="margin-top:0.5rem;"
+                                   value="<?= isset($notice['publish_at']) ? date('Y-m-d\TH:i', strtotime($notice['publish_at'])) : '' ?>"
+                                   <?= (!isset($notice) || empty($notice['publish_at']) || date('Y-m-d\TH:i', strtotime($notice['publish_at'])) <= date('Y-m-d\TH:i')) ? 'disabled' : '' ?>>
                         </div>
                     </div>
 

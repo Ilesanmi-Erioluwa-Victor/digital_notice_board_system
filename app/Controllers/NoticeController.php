@@ -83,7 +83,7 @@ class NoticeController
             'category_id'          => $_POST['category_id'] ? (int) $_POST['category_id'] : null,
             'posted_by'            => $user['id'],
             'priority'             => $_POST['priority'] ?? 'medium',
-            'publish_at'           => $_POST['publish_at'] ?: null,
+            'publish_at'           => !empty($_POST['publish_at']) ? $_POST['publish_at'] : date('Y-m-d H:i:s'),
             'expires_at'           => $_POST['expires_at'] ?: null,
             'is_pinned'            => isset($_POST['is_pinned']) ? (bool) $_POST['is_pinned'] : false,
             'target_audience_type' => $_POST['target_audience_type'] ?? 'everyone',
@@ -150,7 +150,7 @@ class NoticeController
             'body'                 => $_POST['body'] ?? '',
             'category_id'          => $_POST['category_id'] ? (int) $_POST['category_id'] : null,
             'priority'             => $_POST['priority'] ?? 'medium',
-            'publish_at'           => $_POST['publish_at'] ?: null,
+            'publish_at'           => !empty($_POST['publish_at']) ? $_POST['publish_at'] : date('Y-m-d H:i:s'),
             'expires_at'           => $_POST['expires_at'] ?: null,
             'is_pinned'            => isset($_POST['is_pinned']) ? (bool) $_POST['is_pinned'] : false,
             'target_audience_type' => $_POST['target_audience_type'] ?? 'everyone',
@@ -540,8 +540,10 @@ class NoticeController
         if (move_uploaded_file($file['tmp_name'], $destPath)) {
             $this->attachmentModel->create(
                 $noticeId,
+                $file['name'],
                 'assets/uploads/' . $filename,
-                $ext
+                $ext,
+                $file['size']
             );
         }
     }

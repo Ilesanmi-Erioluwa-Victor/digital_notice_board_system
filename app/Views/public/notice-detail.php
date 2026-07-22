@@ -63,9 +63,15 @@
         <strong>Attachments:</strong>
         <ul style="margin-top:0.5rem;list-style:none;">
             <?php foreach ($attachments as $att): ?>
-                <li style="margin-bottom:0.25rem;">
+                <?php $isImage = in_array(strtolower($att['file_type']), ['jpg', 'jpeg', 'png', 'gif']); ?>
+                <li style="margin-bottom:0.5rem;">
+                    <?php if ($isImage): ?>
+                        <a href="/<?= htmlspecialchars($att['file_path']) ?>" target="_blank">
+                            <img src="/<?= htmlspecialchars($att['file_path']) ?>" alt="<?= htmlspecialchars($att['original_name']) ?>" style="max-width:100%;max-height:400px;border-radius:var(--radius);border:1px solid var(--color-border);display:block;margin-bottom:0.25rem;">
+                        </a>
+                    <?php endif; ?>
                     <a href="/<?= htmlspecialchars($att['file_path']) ?>" target="_blank" class="btn btn-sm btn-secondary">
-                        &#128206; Download <?= strtoupper(htmlspecialchars($att['file_type'])) ?>
+                        &#128206; <?= $isImage ? 'Open image' : 'Download ' . strtoupper(htmlspecialchars($att['file_type'])) ?>
                     </a>
                 </li>
             <?php endforeach; ?>
