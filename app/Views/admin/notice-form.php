@@ -60,18 +60,20 @@
                     </div>
 
                     <div class="form-row">
+                        <?php if (isset($notice)): ?>
                         <div class="form-group">
                             <label for="status">Status</label>
                             <select id="status" name="status" class="form-control">
-                                <option value="draft" <?= (isset($notice) && ($notice['status'] ?? '') === 'draft') ? 'selected' : '' ?>>Draft</option>
-                                <option value="pending" <?= (isset($notice) && ($notice['status'] ?? '') === 'pending') ? 'selected' : '' ?>>Pending</option>
+                                <option value="draft" <?= ($notice['status'] ?? '') === 'draft' ? 'selected' : '' ?>>Draft</option>
+                                <option value="pending" <?= ($notice['status'] ?? '') === 'pending' ? 'selected' : '' ?>>Pending</option>
                                 <?php if (isset($isAdmin) && $isAdmin): ?>
-                                    <option value="approved" <?= (isset($notice) && ($notice['status'] ?? '') === 'approved') ? 'selected' : '' ?>>Approved</option>
-                                    <option value="published" <?= (isset($notice) && ($notice['status'] ?? '') === 'published') ? 'selected' : '' ?> selected>Published</option>
+                                    <option value="approved" <?= ($notice['status'] ?? '') === 'approved' ? 'selected' : '' ?>>Approved</option>
+                                    <option value="published" <?= ($notice['status'] ?? '') === 'published' ? 'selected' : '' ?>>Published</option>
                                 <?php endif; ?>
-                                <option value="archived" <?= (isset($notice) && ($notice['status'] ?? '') === 'archived') ? 'selected' : '' ?>>Archived</option>
+                                <option value="archived" <?= ($notice['status'] ?? '') === 'archived' ? 'selected' : '' ?>>Archived</option>
                             </select>
                         </div>
+                        <?php endif; ?>
                         <div class="form-group">
                             <label>Publishing</label>
                             <div style="display:flex;gap:0.75rem;padding-top:0.35rem;">
