@@ -364,9 +364,11 @@ class NoticeController
     {
         Auth::requireAuth(['admin']);
 
-        $notices    = $this->noticeModel->getPending();
-        $categories = $this->categoryModel->all();
+        $notices       = $this->noticeModel->getPending();
+        $categories    = $this->categoryModel->all();
         $pendingFilter = 'pending';
+        $page          = 1;
+        $pages         = 1;
 
         require __DIR__ . '/../Views/layouts/header.php';
         require __DIR__ . '/../Views/admin/notices-list.php';
