@@ -135,7 +135,8 @@
                                    data-allowed-types="pdf,jpg,png">
                             <?php if (!empty($attachments)): ?>
                                 <p class="text-muted mt-1" style="font-size:0.85rem;">
-                                    Current: <?= htmlspecialchars($attachments[0]['file_path']) ?>
+                                    Current: <?= htmlspecialchars($attachments[0]['original_name']) ?>
+                                    <a href="/<?= htmlspecialchars($attachments[0]['file_path']) ?>" target="_blank" style="margin-left:0.5rem;">&#128206; View</a>
                                 </p>
                             <?php endif; ?>
                         </div>

@@ -133,6 +133,8 @@ CREATE TABLE IF NOT EXISTS notice_attachments (
     file_path VARCHAR(255) NOT NULL,
     file_type VARCHAR(50),
     file_size INTEGER DEFAULT 0,
+    file_data TEXT,
+    file_mime VARCHAR(100),
     uploaded_at TIMESTAMP DEFAULT NOW()
 );
 

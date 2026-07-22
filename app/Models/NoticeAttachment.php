@@ -13,17 +13,19 @@ class NoticeAttachment
         $this->db = Database::getInstance();
     }
 
-    public function create(int $noticeId, string $originalName, string $filePath, string $fileType = '', int $fileSize = 0): int
+    public function create(int $noticeId, string $originalName, string $filePath, string $fileType = '', int $fileSize = 0, string $fileData = '', string $fileMime = ''): int
     {
         $this->db->execute(
-            'INSERT INTO notice_attachments (notice_id, original_name, file_path, file_type, file_size)
-             VALUES (:notice_id, :original_name, :file_path, :file_type, :file_size)',
+            'INSERT INTO notice_attachments (notice_id, original_name, file_path, file_type, file_size, file_data, file_mime)
+             VALUES (:notice_id, :original_name, :file_path, :file_type, :file_size, :file_data, :file_mime)',
             [
                 'notice_id'     => $noticeId,
                 'original_name' => $originalName,
                 'file_path'     => $filePath,
                 'file_type'     => $fileType,
                 'file_size'     => $fileSize,
+                'file_data'     => $fileData ?: null,
+                'file_mime'     => $fileMime ?: null,
             ]
         );
         return (int) $this->db->lastInsertId('notice_attachments_id_seq');
@@ -42,6 +44,14 @@ class NoticeAttachment
         return $this->db->fetchOne(
             'SELECT * FROM notice_attachments WHERE id = :id',
             ['id' => $id]
+        );
+    }
+
+    public function updatePath(int $id, string $path): int
+    {
+        return $this->db->execute(
+            'UPDATE notice_attachments SET file_path = :path WHERE id = :id',
+            ['path' => $path, 'id' => $id]
         );
     }
 

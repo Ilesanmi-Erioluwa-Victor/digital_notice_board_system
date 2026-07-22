@@ -543,29 +543,25 @@ class NoticeController
             return false;
         }
 
-        $uploadDir = defined('UPLOAD_DIR') ? UPLOAD_DIR : __DIR__ . '/../../public/assets/uploads/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
+        $fileData = base64_encode(file_get_contents($file['tmp_name']));
+        $fileMime = mime_content_type($file['tmp_name']) ?: 'application/octet-stream';
 
-        $filename = uniqid('notice_') . '.' . $ext;
-        $destPath = rtrim($uploadDir, '/') . '/' . $filename;
+        $attId = $this->attachmentModel->create(
+            $noticeId,
+            $file['name'],
+            'serve-attachment.php?id=0',
+            $ext,
+            $file['size'],
+            $fileData,
+            $fileMime
+        );
 
-        if (move_uploaded_file($file['tmp_name'], $destPath)) {
-            $this->attachmentModel->create(
-                $noticeId,
-                $file['name'],
-                'assets/uploads/' . $filename,
-                $noticeId,
-                $file['name'],
-                'assets/uploads/' . $filename,
-                $ext,
-                $file['size']
-            );
+        if ($attId) {
+            $this->attachmentModel->updatePath($attId, 'serve-attachment.php?id=' . $attId);
             return true;
         }
 
-        $_SESSION['error'] = 'Failed to save attachment. Please check directory permissions.';
+        $_SESSION['error'] = 'Failed to save attachment to database.';
         return false;
     }
 }
