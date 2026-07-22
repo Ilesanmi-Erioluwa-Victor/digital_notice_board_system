@@ -43,22 +43,22 @@ INSERT INTO levels (name, sort_order) VALUES
     ('500 Level', 5);
 
 -- ─── Users ─────────────────────────────────────────────────────────────────
-INSERT INTO users (name, email, password_hash, role, staff_id, department_id, is_active) VALUES
+INSERT INTO users (name, email, password_hash, role, staff_id, department_id, programme_id, level_id, is_active) VALUES
     ('System Admin', 'admin@example.com',
      '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
-     'admin', 'ADM001', 1, TRUE),
+     'admin', 'ADM001', 1, NULL, NULL, TRUE),
     ('Dr. Jane Staff', 'staff@example.com',
      '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
-     'staff', 'STF001', 1, TRUE),
+     'staff', 'STF001', 1, NULL, NULL, TRUE),
     ('Mr. Bob Staff', 'staff2@example.com',
      '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
-     'staff', 'STF002', 3, TRUE),
+     'staff', 'STF002', 3, NULL, NULL, TRUE),
     ('Alice Student', 'student@example.com',
      '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
-     'student', NULL, NULL, NULL, 1, TRUE),
+     'student', NULL, 1, 1, 3, TRUE),
     ('Bob Student', 'student2@example.com',
      '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
-     'student', NULL, NULL, NULL, 3, TRUE);
+     'student', NULL, 3, 3, 3, TRUE);
 
 -- ─── Categories ────────────────────────────────────────────────────────────
 INSERT INTO categories (name, description) VALUES
