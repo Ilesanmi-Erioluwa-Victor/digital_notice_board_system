@@ -174,6 +174,18 @@
     xhr.send('_token=' + encodeURIComponent(getCsrfToken()));
   });
 
+  // ─── Form Submit Loading States ──────────────────────────────────────────
+
+  document.addEventListener('submit', function (e) {
+    if (e.defaultPrevented) return;
+    var btn = e.target.querySelector('button[type="submit"]');
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    btn.classList.add('btn-loading');
+    btn.setAttribute('data-orig-html', btn.innerHTML);
+    btn.innerHTML = '<span class="spinner"></span> ' + btn.textContent.trim();
+  });
+
   // ─── Notice Status Colors ─────────────────────────────────────────────────
 
   window.getStatusBadgeClass = function (status) {

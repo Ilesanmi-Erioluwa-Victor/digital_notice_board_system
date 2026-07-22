@@ -100,8 +100,9 @@ class NoticeController
 
         $noticeId = $this->noticeModel->create($data);
 
+        $uploadOk = true;
         if (!empty($_FILES['attachment']['name'])) {
-            $this->handleFileUpload($noticeId);
+            $uploadOk = $this->handleFileUpload($noticeId);
         }
 
         $this->logModel->log($user['id'], 'created', 'notice', $noticeId, 'Created notice: ' . $_POST['title']);
@@ -110,7 +111,9 @@ class NoticeController
             $this->sendEmailNotifications($noticeId, $_POST['title'] ?? '');
         }
 
-        $_SESSION['success'] = 'Notice created successfully.';
+        if ($uploadOk) {
+            $_SESSION['success'] = 'Notice created successfully.';
+        }
         header('Location: /admin/notices');
         exit;
     }
@@ -167,8 +170,9 @@ class NoticeController
 
         $this->noticeModel->update($id, $data);
 
+        $uploadOk = true;
         if (!empty($_FILES['attachment']['name'])) {
-            $this->handleFileUpload($id);
+            $uploadOk = $this->handleFileUpload($id);
         }
 
         $this->logModel->log($user['id'], 'edited', 'notice', $id, 'Edited notice ID ' . $id);
@@ -177,7 +181,9 @@ class NoticeController
             $this->sendEmailNotifications($id, $_POST['title'] ?? '');
         }
 
-        $_SESSION['success'] = 'Notice updated successfully.';
+        if ($uploadOk) {
+            $_SESSION['success'] = 'Notice updated successfully.';
+        }
         header('Location: /admin/notices');
         exit;
     }
@@ -510,23 +516,29 @@ class NoticeController
         }
     }
 
-    private function handleFileUpload(int $noticeId): void
+    private function handleFileUpload(int $noticeId): bool
     {
         $file = $_FILES['attachment'];
         if ($file['error'] !== UPLOAD_ERR_OK) {
-            return;
+            if ($file['error'] === UPLOAD_ERR_INI_SIZE || $file['error'] === UPLOAD_ERR_FORM_SIZE) {
+                $_SESSION['error'] = 'Attachment exceeds the maximum allowed file size.';
+            } elseif ($file['error'] !== UPLOAD_ERR_NO_FILE) {
+                $_SESSION['error'] = 'Attachment upload failed (error code ' . $file['error'] . ').';
+            }
+            return false;
         }
 
         $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        $allowed = ['pdf', 'docx', 'jpg', 'png', 'gif', 'zip'];
+        $allowed = defined('ALLOWED_FILE_TYPES') ? ALLOWED_FILE_TYPES : ['pdf', 'docx', 'jpg', 'png', 'gif', 'zip'];
         if (!in_array($ext, $allowed)) {
-            $_SESSION['error'] = 'Invalid file type. Only PDF, DOCX, JPG, PNG, GIF, ZIP allowed.';
-            return;
+            $_SESSION['error'] = 'Invalid file type. Only ' . strtoupper(implode(', ', $allowed)) . ' allowed.';
+            return false;
         }
 
-        if ($file['size'] > 10 * 1024 * 1024) {
-            $_SESSION['error'] = 'File too large. Maximum size is 10MB.';
-            return;
+        $maxSize = defined('UPLOAD_MAX_SIZE') ? UPLOAD_MAX_SIZE : 10 * 1024 * 1024;
+        if ($file['size'] > $maxSize) {
+            $_SESSION['error'] = 'File too large. Maximum size is ' . ($maxSize / 1024 / 1024) . 'MB.';
+            return false;
         }
 
         $uploadDir = __DIR__ . '/../../public/assets/uploads/';
@@ -545,6 +557,10 @@ class NoticeController
                 $ext,
                 $file['size']
             );
+            return true;
         }
+
+        $_SESSION['error'] = 'Failed to save attachment. Please check directory permissions.';
+        return false;
     }
 }
