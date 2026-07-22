@@ -101,7 +101,7 @@ class NoticeController
             $this->handleFileUpload($noticeId);
         }
 
-        $this->logModel->log($user['id'], 'created', $noticeId, 'Created notice: ' . $_POST['title']);
+        $this->logModel->log($user['id'], 'created', 'notice', $noticeId, 'Created notice: ' . $_POST['title']);
 
         if ($data['status'] === 'published') {
             $this->sendEmailNotifications($noticeId, $_POST['title'] ?? '');
@@ -168,7 +168,7 @@ class NoticeController
             $this->handleFileUpload($id);
         }
 
-        $this->logModel->log($user['id'], 'edited', $id, 'Edited notice ID ' . $id);
+        $this->logModel->log($user['id'], 'edited', 'notice', $id, 'Edited notice ID ' . $id);
 
         if (($_POST['status'] ?? '') === 'published') {
             $this->sendEmailNotifications($id, $_POST['title'] ?? '');
@@ -208,7 +208,7 @@ class NoticeController
 
         $this->noticeModel->delete($id);
         $user = Auth::currentUser();
-        $this->logModel->log($user['id'], 'deleted', $id, 'Deleted notice ID ' . $id);
+        $this->logModel->log($user['id'], 'deleted', 'notice', $id, 'Deleted notice ID ' . $id);
 
         $_SESSION['success'] = 'Notice deleted successfully.';
         header('Location: /admin/notices');
@@ -249,7 +249,7 @@ class NoticeController
         $user = Auth::currentUser();
 
         $this->noticeModel->approve($id, $user['id']);
-        $this->logModel->log($user['id'], 'approved', $id, 'Approved notice ID ' . $id);
+        $this->logModel->log($user['id'], 'approved', 'notice', $id, 'Approved notice ID ' . $id);
 
         $notice = $this->noticeModel->findById($id);
         if ($notice) {
@@ -283,7 +283,7 @@ class NoticeController
         $user   = Auth::currentUser();
 
         $this->noticeModel->reject($id, $user['id'], $reason);
-        $this->logModel->log($user['id'], 'rejected', $id, 'Rejected notice ID ' . $id . ' reason: ' . $reason);
+        $this->logModel->log($user['id'], 'rejected', 'notice', $id, 'Rejected notice ID ' . $id . ' reason: ' . $reason);
 
         $notice = $this->noticeModel->findById($id);
         if ($notice) {
@@ -317,7 +317,7 @@ class NoticeController
 
         $newId = $this->noticeModel->duplicate($id);
         if ($newId) {
-            $this->logModel->log($user['id'], 'duplicated', $newId, 'Duplicated notice ID ' . $id . ' as notice ID ' . $newId);
+            $this->logModel->log($user['id'], 'duplicated', 'notice', $newId, 'Duplicated notice ID ' . $id . ' as notice ID ' . $newId);
             $_SESSION['success'] = 'Notice duplicated successfully.';
         } else {
             $_SESSION['error'] = 'Failed to duplicate notice.';
@@ -350,7 +350,7 @@ class NoticeController
 
         $newPinned = !$notice['is_pinned'];
         $this->noticeModel->update($id, ['is_pinned' => $newPinned]);
-        $this->logModel->log($user['id'], 'pinned', $id, ($newPinned ? 'Pinned' : 'Unpinned') . ' notice ID ' . $id);
+        $this->logModel->log($user['id'], 'pinned', 'notice', $id, ($newPinned ? 'Pinned' : 'Unpinned') . ' notice ID ' . $id);
 
         $_SESSION['success'] = $newPinned ? 'Notice pinned successfully.' : 'Notice unpinned successfully.';
         header('Location: /admin/notices');
