@@ -10,10 +10,15 @@
     <title>Digital Notice Board</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<?php
+$docRoot = $_SERVER['DOCUMENT_ROOT'] ?? __DIR__ . '/../../../public';
+$cssVersion = file_exists($docRoot . '/assets/css/style.css') ? filemtime($docRoot . '/assets/css/style.css') : time();
+$adminCssVersion = file_exists($docRoot . '/assets/css/admin.css') ? filemtime($docRoot . '/assets/css/admin.css') : time();
+?>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/style.css?v=<?= $cssVersion ?>">
     <?php if (strpos($_SERVER['REQUEST_URI'] ?? '', '/admin') === 0): ?>
-    <link rel="stylesheet" href="/assets/css/admin.css">
+    <link rel="stylesheet" href="/assets/css/admin.css?v=<?= $adminCssVersion ?>">
     <?php endif; ?>
     <style>
         :root{--color-background-dark:#0F172A;--color-surface-dark:#1E293B;--color-text-primary-dark:#F1F5F9;--color-text-secondary-dark:#94A3B8;--color-border-dark:#334155;--color-primary-dark:#3B82F6}html.dark-mode{--color-background:var(--color-background-dark);--color-surface:var(--color-surface-dark);--color-text-primary:var(--color-text-primary-dark);--color-text-secondary:var(--color-text-secondary-dark);--color-border:var(--color-border-dark)}html.dark-mode .site-header{background:var(--color-primary-dark)}html.dark-mode .card,html.dark-mode .form-control{background:var(--color-surface-dark);border-color:var(--color-border-dark);color:var(--color-text-primary-dark)}html.dark-mode .card-footer{background:var(--color-background-dark);border-color:var(--color-border-dark)}html.dark-mode .badge-normal{background:#1e3a5f;color:#93c5fd}html.dark-mode .badge-urgent{background:#3b1a1a;color:#fca5a5}html.dark-mode .badge-expiring{background:#3b2f1a;color:#fcd34d}html.dark-mode .badge-published{background:#1a3b2a;color:#86efac}html.dark-mode .badge-draft{background:#1e293b;color:#94a3b8}html.dark-mode .badge-archived{background:#1e293b;color:#94a3b8}html.dark-mode table th{background:var(--color-surface-dark)}html.dark-mode table tr:hover td{background:#334155}html.dark-mode .toast-success{background:#1a3b2a;color:#86efac;border-color:#166534}html.dark-mode .toast-error{background:#3b1a1a;color:#fca5a5;border-color:#7f1d1d}html.dark-mode .toast-info{background:#1e3a5f;color:#93c5fd;border-color:#1e40af}#dark-mode-toggle{background:none;border:1px solid rgba(255,255,255,0.3);border-radius:50%;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:1.1rem;line-height:1;padding:0;transition:background .2s;min-width:36px;min-height:36px}#dark-mode-toggle:hover{background:rgba(255,255,255,0.15)}
