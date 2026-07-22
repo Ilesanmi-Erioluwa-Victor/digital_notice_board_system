@@ -1,10 +1,4 @@
 <?php
-/**
- * User Model — Database interaction for the users table.
- *
- * Handles user creation, lookup by email/id, listing all users,
- * role updates, and deletion. All queries use prepared statements.
- */
 
 namespace App\Models;
 
@@ -19,31 +13,30 @@ class User
         $this->db = Database::getInstance();
     }
 
-    /**
-     * Create a new user with a hashed password.
-     *
-     * @param string $name
-     * @param string $email
-     * @param string $password Plain-text password (will be hashed)
-     * @param string $role
-     * @return int The new user's ID
-     */
-    public function create(string $name, string $email, string $password, string $role = 'viewer'): int
+    public function create(array $data): int
     {
-        $hash = password_hash($password, PASSWORD_DEFAULT);
+        $hash = password_hash($data['password'], PASSWORD_DEFAULT);
         $this->db->execute(
-            'INSERT INTO users (name, email, password_hash, role) VALUES (:name, :email, :hash, :role)',
-            ['name' => $name, 'email' => $email, 'hash' => $hash, 'role' => $role]
+            'INSERT INTO users (name, email, password_hash, role, staff_id, student_id, department_id, programme_id, level_id, is_active, avatar_url, phone)
+             VALUES (:name, :email, :hash, :role, :staff_id, :student_id, :department_id, :programme_id, :level_id, :is_active, :avatar_url, :phone)',
+            [
+                'name'           => $data['name'],
+                'email'          => $data['email'],
+                'hash'           => $hash,
+                'role'           => $data['role'] ?? 'student',
+                'staff_id'       => $data['staff_id'] ?? null,
+                'student_id'     => $data['student_id'] ?? null,
+                'department_id'  => $data['department_id'] ?? null,
+                'programme_id'   => $data['programme_id'] ?? null,
+                'level_id'       => $data['level_id'] ?? null,
+                'is_active'      => $data['is_active'] ?? true,
+                'avatar_url'     => $data['avatar_url'] ?? null,
+                'phone'          => $data['phone'] ?? null,
+            ]
         );
         return (int) $this->db->lastInsertId('users_id_seq');
     }
 
-    /**
-     * Find a user by email address (used during login).
-     *
-     * @param string $email
-     * @return array|null
-     */
     public function findByEmail(string $email): ?array
     {
         return $this->db->fetchOne(
@@ -52,12 +45,6 @@ class User
         );
     }
 
-    /**
-     * Find a user by their primary key ID.
-     *
-     * @param int $id
-     * @return array|null
-     */
     public function findById(int $id): ?array
     {
         return $this->db->fetchOne(
@@ -66,39 +53,76 @@ class User
         );
     }
 
-    /**
-     * Retrieve all users, ordered by creation date (newest first).
-     *
-     * @return array
-     */
-    public function all(): array
+    public function findByRole(string $role): array
     {
         return $this->db->fetchAll(
-            'SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC'
+            'SELECT * FROM users WHERE role = :role ORDER BY name ASC',
+            ['role' => $role]
         );
     }
 
-    /**
-     * Update a user's role.
-     *
-     * @param int    $id
-     * @param string $role
-     * @return int Affected rows
-     */
+    public function search(string $keyword): array
+    {
+        $like = '%' . $keyword . '%';
+        return $this->db->fetchAll(
+            'SELECT * FROM users
+             WHERE name ILIKE :keyword
+                OR email ILIKE :keyword
+                OR staff_id ILIKE :keyword
+                OR student_id ILIKE :keyword
+                OR phone ILIKE :keyword
+             ORDER BY name ASC',
+            ['keyword' => $like]
+        );
+    }
+
+    public function all(): array
+    {
+        return $this->db->fetchAll(
+            'SELECT id, name, email, role, staff_id, student_id, department_id, programme_id, level_id, is_active, avatar_url, phone, created_at
+             FROM users ORDER BY created_at DESC'
+        );
+    }
+
+    public function updateProfile(int $id, array $data): int
+    {
+        $fields = [];
+        $params = ['id' => $id];
+
+        $allowed = ['name', 'email', 'staff_id', 'student_id', 'department_id', 'programme_id', 'level_id', 'is_active', 'avatar_url', 'phone'];
+        foreach ($allowed as $field) {
+            if (array_key_exists($field, $data)) {
+                $fields[] = "$field = :$field";
+                $params[$field] = $data[$field];
+            }
+        }
+
+        if (empty($fields)) {
+            return 0;
+        }
+
+        $fields[] = 'updated_at = NOW()';
+        $sql = 'UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = :id';
+
+        return $this->db->execute($sql, $params);
+    }
+
     public function updateRole(int $id, string $role): int
     {
         return $this->db->execute(
-            'UPDATE users SET role = :role WHERE id = :id',
+            'UPDATE users SET role = :role, updated_at = NOW() WHERE id = :id',
             ['role' => $role, 'id' => $id]
         );
     }
 
-    /**
-     * Delete a user by ID.
-     *
-     * @param int $id
-     * @return int Affected rows
-     */
+    public function updateLastLogin(int $id): int
+    {
+        return $this->db->execute(
+            'UPDATE users SET updated_at = NOW() WHERE id = :id',
+            ['id' => $id]
+        );
+    }
+
     public function delete(int $id): int
     {
         return $this->db->execute(

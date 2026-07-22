@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Core\Database;
 
-class Category
+class Role
 {
     private Database $db;
 
@@ -16,31 +16,37 @@ class Category
     public function create(string $name, string $description = ''): int
     {
         $this->db->execute(
-            'INSERT INTO categories (name, description) VALUES (:name, :description)',
+            'INSERT INTO roles (name, description) VALUES (:name, :description)',
             ['name' => $name, 'description' => $description]
         );
-        return (int) $this->db->lastInsertId('categories_id_seq');
+        return (int) $this->db->lastInsertId('roles_id_seq');
     }
 
     public function all(): array
     {
-        return $this->db->fetchAll(
-            'SELECT * FROM categories ORDER BY name ASC'
-        );
+        return $this->db->fetchAll('SELECT * FROM roles ORDER BY name ASC');
     }
 
     public function findById(int $id): ?array
     {
         return $this->db->fetchOne(
-            'SELECT * FROM categories WHERE id = :id',
+            'SELECT * FROM roles WHERE id = :id',
             ['id' => $id]
+        );
+    }
+
+    public function findByName(string $name): ?array
+    {
+        return $this->db->fetchOne(
+            'SELECT * FROM roles WHERE name = :name',
+            ['name' => $name]
         );
     }
 
     public function update(int $id, string $name, string $description = ''): int
     {
         return $this->db->execute(
-            'UPDATE categories SET name = :name, description = :description WHERE id = :id',
+            'UPDATE roles SET name = :name, description = :description WHERE id = :id',
             ['name' => $name, 'description' => $description, 'id' => $id]
         );
     }
@@ -48,7 +54,7 @@ class Category
     public function delete(int $id): int
     {
         return $this->db->execute(
-            'DELETE FROM categories WHERE id = :id',
+            'DELETE FROM roles WHERE id = :id',
             ['id' => $id]
         );
     }

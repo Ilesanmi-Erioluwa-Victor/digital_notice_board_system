@@ -1,7 +1,4 @@
 <?php
-/**
- * CategoryController — CRUD for notice categories (admin only).
- */
 
 namespace App\Controllers;
 
@@ -17,26 +14,18 @@ class CategoryController
         $this->categoryModel = new Category();
     }
 
-    /**
-     * List all categories.
-     * GET /admin/categories
-     */
     public function index(array $params = []): void
     {
-        Auth::requireAuth(['super_admin', 'admin']);
+        Auth::requireAuth(['admin']);
         $categories = $this->categoryModel->all();
         require __DIR__ . '/../Views/layouts/header.php';
         require __DIR__ . '/../Views/admin/categories.php';
         require __DIR__ . '/../Views/layouts/footer.php';
     }
 
-    /**
-     * Create a new category.
-     * POST /admin/categories/create
-     */
     public function create(array $params = []): void
     {
-        Auth::requireAuth(['super_admin', 'admin']);
+        Auth::requireAuth(['admin']);
 
         $token = $_POST['csrf_token'] ?? '';
         if (!Auth::validateCsrfToken($token)) {
@@ -60,13 +49,9 @@ class CategoryController
         exit;
     }
 
-    /**
-     * Update an existing category.
-     * POST /admin/categories/edit/{id}
-     */
     public function update(array $params = []): void
     {
-        Auth::requireAuth(['super_admin', 'admin']);
+        Auth::requireAuth(['admin']);
 
         $token = $_POST['csrf_token'] ?? '';
         if (!Auth::validateCsrfToken($token)) {
@@ -91,13 +76,9 @@ class CategoryController
         exit;
     }
 
-    /**
-     * Delete a category.
-     * POST /admin/categories/delete/{id}
-     */
     public function delete(array $params = []): void
     {
-        Auth::requireAuth(['super_admin', 'admin']);
+        Auth::requireAuth(['admin']);
 
         $token = $_POST['csrf_token'] ?? '';
         if (!Auth::validateCsrfToken($token)) {

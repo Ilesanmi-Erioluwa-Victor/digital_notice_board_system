@@ -1,43 +1,43 @@
 <?php
-/**
- * NoticeController — Handles all notice CRUD operations and API endpoints.
- *
- * Admin routes manage the full lifecycle; API routes return JSON for AJAX polling.
- * Every state-changing action logs to activity_logs and validates CSRF.
- */
 
 namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Core\Mailer;
+use App\Core\Database;
 use App\Models\Notice;
-use App\Models\Attachment;
+use App\Models\NoticeAttachment;
+use App\Models\NoticeView;
+use App\Models\Bookmark;
 use App\Models\ActivityLog;
 use App\Models\Category;
+use App\Models\Notification;
 use App\Models\User;
 
 class NoticeController
 {
     private Notice $noticeModel;
-    private Attachment $attachmentModel;
+    private NoticeAttachment $attachmentModel;
+    private NoticeView $noticeViewModel;
+    private Bookmark $bookmarkModel;
     private ActivityLog $logModel;
     private Category $categoryModel;
+    private Notification $notificationModel;
 
     public function __construct()
     {
-        $this->noticeModel     = new Notice();
-        $this->attachmentModel = new Attachment();
-        $this->logModel        = new ActivityLog();
-        $this->categoryModel   = new Category();
+        $this->noticeModel       = new Notice();
+        $this->attachmentModel   = new NoticeAttachment();
+        $this->noticeViewModel   = new NoticeView();
+        $this->bookmarkModel     = new Bookmark();
+        $this->logModel          = new ActivityLog();
+        $this->categoryModel     = new Category();
+        $this->notificationModel = new Notification();
     }
 
-    /**
-     * List all notices (admin) with optional status/category filters.
-     * GET /admin/notices
-     */
     public function index(array $params = []): void
     {
-        Auth::requireAuth(['super_admin', 'admin']);
+        Auth::requireAuth(['admin', 'staff']);
 
         $page    = (int) ($_GET['page'] ?? 1);
         $status  = $_GET['status'] ?? '';
@@ -51,26 +51,18 @@ class NoticeController
         require __DIR__ . '/../Views/layouts/footer.php';
     }
 
-    /**
-     * Show the notice creation form.
-     * GET /admin/notices/create
-     */
     public function createForm(array $params = []): void
     {
-        Auth::requireAuth(['super_admin', 'admin']);
+        Auth::requireAuth(['admin', 'staff']);
         $categories = $this->categoryModel->all();
         require __DIR__ . '/../Views/layouts/header.php';
         require __DIR__ . '/../Views/admin/notice-form.php';
         require __DIR__ . '/../Views/layouts/footer.php';
     }
 
-    /**
-     * Process notice creation with file upload handling.
-     * POST /admin/notices/create
-     */
     public function create(array $params = []): void
     {
-        Auth::requireAuth(['super_admin', 'admin']);
+        Auth::requireAuth(['admin', 'staff']);
 
         $token = $_POST['csrf_token'] ?? '';
         if (!Auth::validateCsrfToken($token)) {
@@ -79,36 +71,50 @@ class NoticeController
             exit;
         }
 
-        $user = Auth::currentUser();
-        $noticeId = $this->noticeModel->create([
-            'title'       => $_POST['title'] ?? '',
-            'body'        => $_POST['body'] ?? '',
-            'category_id' => $_POST['category_id'] ? (int) $_POST['category_id'] : null,
-            'posted_by'   => $user['id'],
-            'priority'    => $_POST['priority'] ?? 'normal',
-            'status'      => $_POST['status'] ?? 'draft',
-            'publish_at'  => $_POST['publish_at'] ?: null,
-            'expires_at'  => $_POST['expires_at'] ?: null,
-        ]);
+        $user    = Auth::currentUser();
+        $isAdmin = $user['role'] === 'admin';
 
-        // Handle file upload
+        $data = [
+            'title'                => $_POST['title'] ?? '',
+            'body'                 => $_POST['body'] ?? '',
+            'category_id'          => $_POST['category_id'] ? (int) $_POST['category_id'] : null,
+            'posted_by'            => $user['id'],
+            'priority'             => $_POST['priority'] ?? 'medium',
+            'publish_at'           => $_POST['publish_at'] ?: null,
+            'expires_at'           => $_POST['expires_at'] ?: null,
+            'is_pinned'            => isset($_POST['is_pinned']) ? (bool) $_POST['is_pinned'] : false,
+            'target_audience_type' => $_POST['target_audience_type'] ?? 'everyone',
+            'target_ids'           => isset($_POST['target_ids']) ? (array) $_POST['target_ids'] : [],
+        ];
+
+        if ($isAdmin) {
+            $data['status']          = $_POST['status'] ?? 'published';
+            $data['approval_status'] = $data['status'] === 'published' ? 'approved' : ($_POST['approval_status'] ?? 'none');
+        } else {
+            $data['status']          = 'pending';
+            $data['approval_status'] = 'pending';
+        }
+
+        $noticeId = $this->noticeModel->create($data);
+
         if (!empty($_FILES['attachment']['name'])) {
             $this->handleFileUpload($noticeId);
         }
 
         $this->logModel->log($user['id'], 'created', $noticeId, 'Created notice: ' . $_POST['title']);
+
+        if ($data['status'] === 'published') {
+            $this->sendEmailNotifications($noticeId, $_POST['title'] ?? '');
+        }
+
         $_SESSION['success'] = 'Notice created successfully.';
         header('Location: /admin/notices');
         exit;
     }
 
-    /**
-     * Show the notice edit form pre-filled.
-     * GET /admin/notices/edit/{id}
-     */
     public function editForm(array $params = []): void
     {
-        Auth::requireAuth(['super_admin', 'admin']);
+        Auth::requireAuth(['admin', 'staff']);
         $id = (int) ($params['id'] ?? 0);
         $notice = $this->noticeModel->findById($id);
         if (!$notice) {
@@ -123,13 +129,9 @@ class NoticeController
         require __DIR__ . '/../Views/layouts/footer.php';
     }
 
-    /**
-     * Update an existing notice.
-     * POST /admin/notices/edit/{id}
-     */
     public function update(array $params = []): void
     {
-        Auth::requireAuth(['super_admin', 'admin']);
+        Auth::requireAuth(['admin', 'staff']);
 
         $token = $_POST['csrf_token'] ?? '';
         if (!Auth::validateCsrfToken($token)) {
@@ -139,66 +141,35 @@ class NoticeController
         }
 
         $id = (int) ($params['id'] ?? 0);
-        $this->noticeModel->update($id, [
-            'title'       => $_POST['title'] ?? '',
-            'body'        => $_POST['body'] ?? '',
-            'category_id' => $_POST['category_id'] ? (int) $_POST['category_id'] : null,
-            'priority'    => $_POST['priority'] ?? 'normal',
-            'status'      => $_POST['status'] ?? 'draft',
-            'publish_at'  => $_POST['publish_at'] ?: null,
-            'expires_at'  => $_POST['expires_at'] ?: null,
-        ]);
 
-        // Handle new file upload if provided
+        $data = [
+            'title'                => $_POST['title'] ?? '',
+            'body'                 => $_POST['body'] ?? '',
+            'category_id'          => $_POST['category_id'] ? (int) $_POST['category_id'] : null,
+            'priority'             => $_POST['priority'] ?? 'medium',
+            'publish_at'           => $_POST['publish_at'] ?: null,
+            'expires_at'           => $_POST['expires_at'] ?: null,
+            'is_pinned'            => isset($_POST['is_pinned']) ? (bool) $_POST['is_pinned'] : false,
+            'target_audience_type' => $_POST['target_audience_type'] ?? 'everyone',
+        ];
+
+        if (isset($_POST['target_ids'])) {
+            $data['target_ids'] = (array) $_POST['target_ids'];
+        }
+
+        $user = Auth::currentUser();
+        if ($user['role'] === 'admin' && isset($_POST['status'])) {
+            $data['status'] = $_POST['status'];
+        }
+
+        $this->noticeModel->update($id, $data);
+
         if (!empty($_FILES['attachment']['name'])) {
             $this->handleFileUpload($id);
         }
 
-        $user = Auth::currentUser();
-        $this->logModel->log($user['id'], 'created', $noticeId, 'Created notice: ' . $_POST['title']);
-
-        // Send email notifications if the notice is published immediately
-        if (($_POST['status'] ?? '') === 'published') {
-            $this->sendEmailNotifications($noticeId, $_POST['title']);
-        }
-
-        $_SESSION['success'] = 'Notice created successfully.';
-        header('Location: /admin/notices');
-        exit;
-    }
-
-    /**
-     * Delete a notice and its attachment file.
-     * POST /admin/notices/delete/{id}
-     */
-    public function delete(array $params = []): void
-    {
-        Auth::requireAuth(['super_admin', 'admin']);
-
-        $token = $_POST['csrf_token'] ?? '';
-        if (!Auth::validateCsrfToken($token)) {
-            $_SESSION['error'] = 'Invalid security token.';
-            header('Location: /admin/notices');
-            exit;
-        }
-
-        $id = (int) ($params['id'] ?? 0);
-
-        // Remove attachment files from disk
-        $attachments = $this->attachmentModel->findByNoticeId($id);
-        foreach ($attachments as $att) {
-            $filePath = __DIR__ . '/../../' . $att['file_path'];
-            if (file_exists($filePath)) {
-                unlink($filePath);
-            }
-            $this->attachmentModel->delete($att['id']);
-        }
-
-        $this->noticeModel->delete($id);
-        $user = Auth::currentUser();
         $this->logModel->log($user['id'], 'edited', $id, 'Edited notice ID ' . $id);
 
-        // Send email notifications if status changed to published
         if (($_POST['status'] ?? '') === 'published') {
             $this->sendEmailNotifications($id, $_POST['title'] ?? '');
         }
@@ -208,11 +179,42 @@ class NoticeController
         exit;
     }
 
-    /**
-     * JSON endpoint returning active published notices.
-     * Used by AJAX polling on public pages and kiosk display.
-     * GET /api/notices/active
-     */
+    public function delete(array $params = []): void
+    {
+        Auth::requireAuth(['admin']);
+
+        $token = $_POST['csrf_token'] ?? '';
+        if (!Auth::validateCsrfToken($token)) {
+            $_SESSION['error'] = 'Invalid security token.';
+            header('Location: /admin/notices');
+            exit;
+        }
+
+        $id = (int) ($params['id'] ?? 0);
+
+        $attachments = $this->attachmentModel->findByNoticeId($id);
+        foreach ($attachments as $att) {
+            $filePath = __DIR__ . '/../../' . $att['file_path'];
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+            $this->attachmentModel->delete($att['id']);
+        }
+
+        $db = Database::getInstance();
+        $db->execute('DELETE FROM notice_views WHERE notice_id = :id', ['id' => $id]);
+        $db->execute('DELETE FROM bookmarks WHERE notice_id = :id', ['id' => $id]);
+        $db->execute('DELETE FROM notifications WHERE link LIKE :pattern', ['pattern' => '%/notice/' . $id . '%']);
+
+        $this->noticeModel->delete($id);
+        $user = Auth::currentUser();
+        $this->logModel->log($user['id'], 'deleted', $id, 'Deleted notice ID ' . $id);
+
+        $_SESSION['success'] = 'Notice deleted successfully.';
+        header('Location: /admin/notices');
+        exit;
+    }
+
     public function apiActive(array $params = []): void
     {
         header('Content-Type: application/json');
@@ -220,10 +222,6 @@ class NoticeController
         echo json_encode($notices);
     }
 
-    /**
-     * JSON endpoint for keyword search across notices.
-     * GET /api/notices/search?q=
-     */
     public function apiSearch(array $params = []): void
     {
         header('Content-Type: application/json');
@@ -236,26 +234,232 @@ class NoticeController
         echo json_encode($results);
     }
 
-    /**
-     * Send email notifications to all viewer users about a new notice.
-     * Runs synchronously within the request for project scope simplicity.
-     *
-     * @param int    $noticeId
-     * @param string $noticeTitle
-     */
+    public function approve(array $params = []): void
+    {
+        Auth::requireAuth(['admin']);
+
+        $token = $_POST['csrf_token'] ?? '';
+        if (!Auth::validateCsrfToken($token)) {
+            $_SESSION['error'] = 'Invalid security token.';
+            header('Location: /admin/notices');
+            exit;
+        }
+
+        $id   = (int) ($params['id'] ?? 0);
+        $user = Auth::currentUser();
+
+        $this->noticeModel->approve($id, $user['id']);
+        $this->logModel->log($user['id'], 'approved', $id, 'Approved notice ID ' . $id);
+
+        $notice = $this->noticeModel->findById($id);
+        if ($notice) {
+            $this->notificationModel->create(
+                (int) $notice['posted_by'],
+                'notice_approved',
+                'Notice Approved',
+                'Your notice "' . $notice['title'] . '" has been approved.',
+                '/notice/' . $id
+            );
+        }
+
+        $_SESSION['success'] = 'Notice approved successfully.';
+        header('Location: /admin/notices');
+        exit;
+    }
+
+    public function reject(array $params = []): void
+    {
+        Auth::requireAuth(['admin']);
+
+        $token = $_POST['csrf_token'] ?? '';
+        if (!Auth::validateCsrfToken($token)) {
+            $_SESSION['error'] = 'Invalid security token.';
+            header('Location: /admin/notices');
+            exit;
+        }
+
+        $id     = (int) ($params['id'] ?? 0);
+        $reason = $_POST['rejection_reason'] ?? '';
+        $user   = Auth::currentUser();
+
+        $this->noticeModel->reject($id, $user['id'], $reason);
+        $this->logModel->log($user['id'], 'rejected', $id, 'Rejected notice ID ' . $id . ' reason: ' . $reason);
+
+        $notice = $this->noticeModel->findById($id);
+        if ($notice) {
+            $this->notificationModel->create(
+                (int) $notice['posted_by'],
+                'notice_rejected',
+                'Notice Rejected',
+                'Your notice "' . $notice['title'] . '" has been rejected.' . ($reason ? ' Reason: ' . $reason : ''),
+                '/notice/' . $id
+            );
+        }
+
+        $_SESSION['success'] = 'Notice rejected.';
+        header('Location: /admin/notices');
+        exit;
+    }
+
+    public function duplicate(array $params = []): void
+    {
+        Auth::requireAuth(['admin']);
+
+        $token = $_POST['csrf_token'] ?? '';
+        if (!Auth::validateCsrfToken($token)) {
+            $_SESSION['error'] = 'Invalid security token.';
+            header('Location: /admin/notices');
+            exit;
+        }
+
+        $id   = (int) ($params['id'] ?? 0);
+        $user = Auth::currentUser();
+
+        $newId = $this->noticeModel->duplicate($id);
+        if ($newId) {
+            $this->logModel->log($user['id'], 'duplicated', $newId, 'Duplicated notice ID ' . $id . ' as notice ID ' . $newId);
+            $_SESSION['success'] = 'Notice duplicated successfully.';
+        } else {
+            $_SESSION['error'] = 'Failed to duplicate notice.';
+        }
+
+        header('Location: /admin/notices');
+        exit;
+    }
+
+    public function pin(array $params = []): void
+    {
+        Auth::requireAuth(['admin']);
+
+        $token = $_POST['csrf_token'] ?? '';
+        if (!Auth::validateCsrfToken($token)) {
+            $_SESSION['error'] = 'Invalid security token.';
+            header('Location: /admin/notices');
+            exit;
+        }
+
+        $id   = (int) ($params['id'] ?? 0);
+        $user = Auth::currentUser();
+
+        $notice = $this->noticeModel->findById($id);
+        if (!$notice) {
+            http_response_code(404);
+            echo 'Notice not found.';
+            return;
+        }
+
+        $newPinned = !$notice['is_pinned'];
+        $this->noticeModel->update($id, ['is_pinned' => $newPinned]);
+        $this->logModel->log($user['id'], 'pinned', $id, ($newPinned ? 'Pinned' : 'Unpinned') . ' notice ID ' . $id);
+
+        $_SESSION['success'] = $newPinned ? 'Notice pinned successfully.' : 'Notice unpinned successfully.';
+        header('Location: /admin/notices');
+        exit;
+    }
+
+    public function pending(array $params = []): void
+    {
+        Auth::requireAuth(['admin']);
+
+        $notices    = $this->noticeModel->getPending();
+        $categories = $this->categoryModel->all();
+        $pendingFilter = 'pending';
+
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/admin/notices-list.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
+    }
+
+    public function show(array $params = []): void
+    {
+        $id = (int) ($params['id'] ?? 0);
+
+        $notice = $this->noticeModel->findById($id);
+        if (!$notice) {
+            http_response_code(404);
+            require __DIR__ . '/../Views/layouts/header.php';
+            echo '<p class="text-center mt-5">Notice not found.</p>';
+            require __DIR__ . '/../Views/layouts/footer.php';
+            return;
+        }
+
+        $user = Auth::currentUser();
+        if ($user) {
+            $this->noticeViewModel->trackView($id, (int) $user['id']);
+        }
+
+        $attachments  = $this->attachmentModel->findByNoticeId($id);
+        $isBookmarked = $user ? $this->bookmarkModel->isBookmarked((int) $user['id'], $id) : false;
+
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/public/notice-detail.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
+    }
+
+    public function bookmark(array $params = []): void
+    {
+        header('Content-Type: application/json');
+        Auth::requireAuth();
+
+        $id   = (int) ($params['id'] ?? 0);
+        $user = Auth::currentUser();
+
+        $result = $this->bookmarkModel->toggle((int) $user['id'], $id);
+        echo json_encode(['bookmarked' => $result['bookmarked']]);
+    }
+
+    public function unbookmark(array $params = []): void
+    {
+        header('Content-Type: application/json');
+        Auth::requireAuth();
+
+        $id   = (int) ($params['id'] ?? 0);
+        $user = Auth::currentUser();
+
+        $db = Database::getInstance();
+        $db->execute(
+            'DELETE FROM bookmarks WHERE user_id = :user_id AND notice_id = :notice_id',
+            ['user_id' => $user['id'], 'notice_id' => $id]
+        );
+
+        echo json_encode(['bookmarked' => false]);
+    }
+
+    public function apiCalendar(array $params = []): void
+    {
+        header('Content-Type: application/json');
+
+        $notices = $this->noticeModel->getUpcomingEvents(50);
+
+        $events = array_map(function ($notice) {
+            $event = [
+                'id'    => (int) $notice['id'],
+                'title' => $notice['title'],
+                'start' => $notice['publish_at'],
+            ];
+            if (!empty($notice['expires_at'])) {
+                $event['end'] = $notice['expires_at'];
+            }
+            return $event;
+        }, $notices);
+
+        echo json_encode($events);
+    }
+
     private function sendEmailNotifications(int $noticeId, string $noticeTitle): void
     {
         $mailer = new Mailer();
         $userModel = new User();
-        $viewers = $userModel->all();
+        $users = $userModel->all();
 
         $noticeUrl = APP_URL . '/notice/' . $noticeId;
 
-        foreach ($viewers as $viewer) {
-            if ($viewer['role'] === 'viewer') {
+        foreach ($users as $user) {
+            if ($user['role'] === 'student') {
                 $mailer->sendNoticeNotification(
-                    $viewer['email'],
-                    $viewer['name'],
+                    (int) $user['id'],
+                    $user['email'],
+                    $user['name'],
                     $noticeTitle,
                     $noticeUrl
                 );
@@ -263,12 +467,6 @@ class NoticeController
         }
     }
 
-    /**
-     * Handle validated file upload for notice attachments.
-     * Validates type (pdf, jpg, png) and size (max 5MB).
-     *
-     * @param int $noticeId
-     */
     private function handleFileUpload(int $noticeId): void
     {
         $file = $_FILES['attachment'];
@@ -276,21 +474,18 @@ class NoticeController
             return;
         }
 
-        // Validate file extension
         $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        $allowed = ['pdf', 'jpg', 'png'];
+        $allowed = ['pdf', 'docx', 'jpg', 'png', 'gif', 'zip'];
         if (!in_array($ext, $allowed)) {
-            $_SESSION['error'] = 'Invalid file type. Only PDF, JPG, PNG allowed.';
+            $_SESSION['error'] = 'Invalid file type. Only PDF, DOCX, JPG, PNG, GIF, ZIP allowed.';
             return;
         }
 
-        // Validate file size (5MB max)
-        if ($file['size'] > 5 * 1024 * 1024) {
-            $_SESSION['error'] = 'File too large. Maximum size is 5MB.';
+        if ($file['size'] > 10 * 1024 * 1024) {
+            $_SESSION['error'] = 'File too large. Maximum size is 10MB.';
             return;
         }
 
-        // Generate unique filename and move to uploads directory
         $uploadDir = __DIR__ . '/../../public/assets/uploads/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);

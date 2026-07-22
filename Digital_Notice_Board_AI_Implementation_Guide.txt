@@ -1,231 +1,75 @@
-PROJECT: Digital Notice Board System
-STACK: HTML5 + CSS3 + Vanilla JavaScript (frontend) | PHP (backend, OOP with lightweight MVC structure) | PostgreSQL (database) | AJAX/Fetch API for real-time-style updates
+Digital Notice Board System - Features & AI Implementation Prompt
 
-Build this project end-to-end, phase by phase, in the order below. Do not skip phases. After each phase, ensure the code runs without errors before moving to the next. Comment all code clearly for academic documentation purposes (this is a Higher National Diploma / National Diploma final year project).
+1.  Authentication Implementation Prompt: Create a secure authentication
+    module with Admin, Staff, and Student roles. Include login, logout,
+    password hashing, session management, forgot/reset password, and
+    profile management.
 
-====================================================================
-PHASE 0: PROJECT OVERVIEW & ARCHITECTURE
-====================================================================
-Create a root-level ARCHITECTURE.md file describing:
-- Project title: "Design and Implementation of a Digital Notice Board System"
-- System purpose: replace paper-based notice boards with a centralized web platform for posting, managing, and viewing organizational announcements
-- Tech stack breakdown: HTML/CSS/JS (frontend), PHP OOP (backend/API), PostgreSQL (database)
-- Folder structure diagram for the project (see Phase 1 for exact structure)
-- Data flow diagram in text form (ASCII or markdown table) showing: Admin → Post Notice → PostgreSQL → AJAX Poll/Fetch → Public Display / User Dashboard
-- User roles diagram: Super Admin, Department Admin, Viewer/User
+2.  Dashboard Implementation Prompt: Build a dashboard showing total
+    notices, active notices, expired notices, users, recent notices, and
+    analytics cards.
 
-====================================================================
-PHASE 1: PROJECT SCAFFOLDING
-====================================================================
-Create the following folder structure at the project root:
+3.  Notice Management Implementation Prompt: Implement CRUD for notices
+    with title, description, category, priority, attachments, publish
+    date, expiry date, target audience, archive, restore, duplicate,
+    pin, and scheduling.
 
-/public                 (web root — index.php entry point, kiosk display page)
-/app
-  /controllers          (NoticeController.php, AuthController.php, CategoryController.php, UserController.php)
-  /models                (Notice.php, User.php, Category.php, Attachment.php, ActivityLog.php)
-  /core                  (Database.php - PDO connection wrapper, Router.php - simple front controller router, Auth.php - session/auth helper)
-  /views
-    /admin               (dashboard.php, notices-list.php, notice-form.php, categories.php, users.php, logs.php)
-    /public              (home.php, notice-detail.php, kiosk.php)
-    /layouts             (header.php, footer.php, sidebar.php)
-/assets
-  /css                   (style.css, admin.css)
-  /js                    (main.js, admin.js, kiosk.js, ajax-polling.js)
-  /uploads               (storage for notice attachments — gitignored except .gitkeep)
-/config
-  (config.php - environment/db config loader, .env.example)
-/sql
-  (schema.sql - full PostgreSQL schema, seed.sql - sample data)
-/docs                    (populated in Phase 9)
+4.  Categories Implementation Prompt: Allow administrators to create,
+    edit, and delete notice categories.
 
-1. Create config/.env.example listing: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, APP_URL, SESSION_SECRET, MAIL_HOST, MAIL_USER, MAIL_PASSWORD (for optional email notifications).
-2. Create config/config.php that loads .env variables (use a small custom parser or vlucas/phpdotenv via Composer) and exposes them as constants/array.
-3. Initialize Composer (composer.json) and require vlucas/phpdotenv for env loading and phpmailer/phpmailer for email notifications.
-4. Create .gitignore ignoring vendor/, .env, /assets/uploads/* (except .gitkeep), and any local config.
-5. Create root README.md with project title, abstract, and setup instructions placeholder (completed in Phase 9).
+5.  Approval Workflow Implementation Prompt: Implement a workflow where
+    staff submit notices, admins approve/reject them before publication.
 
-====================================================================
-PHASE 2: DESIGN SYSTEM & COLOR PALETTE
-====================================================================
-Create /assets/css/style.css and define these as CSS custom properties (variables) in a :root block, themed around clarity, institutional trust, and readability (this is a notice/announcement system, so legibility and urgency-signaling colors matter most):
+6.  Target Audience Implementation Prompt: Allow notices to target
+    everyone or specific faculties, departments, programmes, levels,
+    staff, or students.
 
-:root {
-  --color-primary: #1D4ED8;        /* blue-700 - main brand/action color, buttons, links */
-  --color-primary-dark: #1E3A8A;   /* blue-900 - hover states */
-  --color-secondary: #0891B2;      /* cyan-600 - secondary accents */
-  --color-urgent: #DC2626;         /* red-600 - urgent/pinned notices */
-  --color-warning: #D97706;        /* amber-600 - notices nearing expiry */
-  --color-success: #16A34A;        /* green-600 - success messages, active status */
-  --color-background: #F1F5F9;     /* slate-100 - main app background */
-  --color-surface: #FFFFFF;        /* card/panel backgrounds */
-  --color-text-primary: #0F172A;   /* slate-900 - headings/body text */
-  --color-text-secondary: #475569; /* slate-600 - muted text, timestamps */
-  --color-border: #E2E8F0;         /* slate-200 - borders/dividers */
-}
+7.  Attachments Implementation Prompt: Support secure upload and
+    preview/download of PDF, DOCX, images, and ZIP files.
 
-Use system font stack or import 'Inter' or 'Poppins' from Google Fonts as the base font for readability on a public-facing display. Define reusable utility classes: .btn-primary, .btn-danger, .card, .badge-urgent, .badge-normal, .badge-expiring for consistent styling across admin and public views without a framework dependency (pure CSS, no Bootstrap/Tailwind, since the stack is HTML/CSS/JS/PHP as specified). Structure the CSS using a simple methodology (base > layout > components > utilities sections, clearly commented) so it's easy to explain in Chapter Four.
+8.  Search & Filters Implementation Prompt: Provide keyword search and
+    filters by category, date, priority, status, and audience.
 
-====================================================================
-PHASE 3: RESPONSIVENESS RULES
-====================================================================
-In /assets/css/style.css, implement mobile-first responsive design using CSS media queries at these breakpoints:
-- Base styles: mobile (< 640px) — single column layouts, stacked nav collapsed into a hamburger menu, full-width notice cards
-- @media (min-width: 640px): tablet — 2-column notice grid, expanded nav
-- @media (min-width: 1024px): desktop — 3-column notice grid for public view, sidebar + main content layout for admin dashboard
-- @media (min-width: 1280px): large desktop / kiosk display — larger font sizes for the kiosk.php auto-cycling display mode, since it's meant to be viewed from a distance on a mounted screen
+9.  Notifications Implementation Prompt: Implement in-app notifications
+    and optional email alerts for new notices.
 
-Ensure all buttons and tappable elements have a minimum touch target of 44px height for mobile usability. Use CSS Grid for notice card layouts and Flexbox for nav/header/footer components. Add a hamburger menu toggle in /assets/js/main.js that shows/hides mobile nav via a class toggle (no framework dependency).
+10. Expiry & Scheduling Implementation Prompt: Automatically publish
+    scheduled notices and archive expired notices.
 
-====================================================================
-PHASE 4: DATABASE SCHEMA (PostgreSQL)
-====================================================================
-Create /sql/schema.sql defining:
+11. Priority & Pinning Implementation Prompt: Support High/Medium/Low
+    priority and pinned notices that always appear first.
 
-TABLE users
-- id SERIAL PRIMARY KEY
-- name VARCHAR(150) NOT NULL
-- email VARCHAR(150) UNIQUE NOT NULL
-- password_hash VARCHAR(255) NOT NULL
-- role VARCHAR(20) NOT NULL DEFAULT 'viewer' -- 'super_admin', 'admin', 'viewer'
-- created_at TIMESTAMP DEFAULT NOW()
+12. Read Tracking Implementation Prompt: Track notice views and display
+    read/unread statistics.
 
-TABLE categories
-- id SERIAL PRIMARY KEY
-- name VARCHAR(100) NOT NULL
-- description TEXT
+13. Bookmarks Implementation Prompt: Allow users to bookmark notices for
+    later viewing.
 
-TABLE notices
-- id SERIAL PRIMARY KEY
-- title VARCHAR(255) NOT NULL
-- body TEXT NOT NULL
-- category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL
-- posted_by INTEGER REFERENCES users(id) ON DELETE SET NULL
-- priority VARCHAR(20) DEFAULT 'normal' -- 'normal', 'urgent'
-- status VARCHAR(20) DEFAULT 'draft' -- 'draft', 'published', 'archived'
-- publish_at TIMESTAMP
-- expires_at TIMESTAMP
-- created_at TIMESTAMP DEFAULT NOW()
-- updated_at TIMESTAMP DEFAULT NOW()
+14. Analytics Implementation Prompt: Display charts for monthly notices,
+    views, category distribution, and most viewed notices.
 
-TABLE attachments
-- id SERIAL PRIMARY KEY
-- notice_id INTEGER REFERENCES notices(id) ON DELETE CASCADE
-- file_path VARCHAR(255) NOT NULL
-- file_type VARCHAR(50)
-- uploaded_at TIMESTAMP DEFAULT NOW()
+15. User Management Implementation Prompt: Allow admins to manage users,
+    roles, activation, and departments.
 
-TABLE activity_logs
-- id SERIAL PRIMARY KEY
-- admin_id INTEGER REFERENCES users(id) ON DELETE SET NULL
-- action VARCHAR(100) NOT NULL -- 'created', 'edited', 'deleted', 'published', 'archived'
-- notice_id INTEGER REFERENCES notices(id) ON DELETE SET NULL
-- details TEXT
-- timestamp TIMESTAMP DEFAULT NOW()
+16. Role-Based Access Implementation Prompt: Restrict features based on
+    Admin, Staff, and Student permissions.
 
-Add indexes: CREATE INDEX idx_notices_status ON notices(status); CREATE INDEX idx_notices_publish_at ON notices(publish_at);
+17. Calendar Implementation Prompt: Display upcoming events and notice
+    deadlines in a calendar view.
 
-Create /sql/seed.sql with sample data: 1 super_admin user, 2 admin users, 3 viewer users, 5 categories (Academic, Administrative, Events, Exams, General), and 8 sample notices with varying statuses/priorities for testing.
+18. Activity Logs Implementation Prompt: Log all important system
+    actions with timestamps and users.
 
-====================================================================
-PHASE 5: BACKEND CORE — DATABASE & ROUTING
-====================================================================
-1. Create /app/core/Database.php — a PDO wrapper class using singleton pattern, connecting to PostgreSQL using config from config/config.php, with a getConnection() method. Always use prepared statements (never raw string concatenation) to prevent SQL injection.
-2. Create /app/core/Router.php — a simple front controller router that maps URL paths to controller methods, used by /public/index.php as the single entry point (all requests routed through index.php using .htaccess mod_rewrite rules, include a /public/.htaccess file for this).
-3. Create /app/core/Auth.php — helper class with methods: login($email, $password), logout(), currentUser(), requireAuth($allowedRoles = []) that redirects unauthenticated/unauthorized users, and a CSRF token generator/validator (generateCsrfToken(), validateCsrfToken()) used on all POST forms.
+19. Reports Implementation Prompt: Generate PDF, Excel, and CSV reports
+    for notices, users, and analytics.
 
-====================================================================
-PHASE 6: BACKEND — MODELS
-====================================================================
-Create PHP OOP models in /app/models, each wrapping PDO prepared statement queries:
+20. Responsive UI Implementation Prompt: Create a responsive interface
+    with light/dark mode and accessibility considerations.
 
-1. User.php — create(), findByEmail(), findById(), all(), updateRole(), delete()
-2. Category.php — create(), all(), update(), delete()
-3. Notice.php — create(), update(), delete(), findById(), getActive() (status='published' AND publish_at <= NOW() AND (expires_at IS NULL OR expires_at > NOW())), getByCategory(), search($keyword), getPaginated($page, $perPage), getMostViewed()
-4. Attachment.php — create(), findByNoticeId(), delete()
-5. ActivityLog.php — log($adminId, $action, $noticeId, $details), getRecent($limit)
+21. Security Implementation Prompt: Implement input validation, CSRF
+    protection, XSS prevention, SQL injection prevention, secure file
+    uploads, and audit trails.
 
-Each model method must use parameterized PDO queries. Comment each method explaining what it does for documentation purposes.
-
-====================================================================
-PHASE 7: BACKEND — CONTROLLERS & ENDPOINTS
-====================================================================
-Build controllers in /app/controllers handling both full-page rendering (for initial loads) and JSON responses (for AJAX calls). Organize routes through Router.php.
-
-1. AuthController.php
-   - GET /login → render login view
-   - POST /login → validate credentials, start session, redirect by role
-   - POST /logout → destroy session, redirect to login
-   - GET /register (viewers only, if self-registration is allowed) → render + handle registration with password hashing (password_hash())
-
-2. NoticeController.php
-   - GET /admin/notices → list all notices (admin, with filters: status, category)
-   - GET /admin/notices/create → render notice form
-   - POST /admin/notices/create → validate + insert notice, handle file upload via move_uploaded_file() with type/size validation (allow pdf, jpg, png, max 5MB), log action in activity_logs
-   - GET /admin/notices/edit/{id} → render edit form pre-filled
-   - POST /admin/notices/edit/{id} → update notice, log action
-   - POST /admin/notices/delete/{id} → soft-delete or hard-delete, remove attachment file, log action
-   - GET /api/notices/active → JSON endpoint returning active published notices (used by AJAX polling on public pages and kiosk display)
-   - GET /api/notices/search?q= → JSON endpoint for keyword search
-
-3. CategoryController.php
-   - CRUD endpoints for categories (admin only)
-
-4. UserController.php
-   - GET /admin/users → list users (super_admin only)
-   - POST /admin/users/role/{id} → update user role (super_admin only)
-   - POST /admin/users/delete/{id} → delete user
-
-5. DashboardController.php
-   - GET /admin/dashboard → render stats: total notices, active vs expired count, most-viewed notices, recent activity log feed
-
-6. PublicController.php
-   - GET / → render home.php showing active notices in a responsive grid, with category filter and search bar
-   - GET /notice/{id} → render notice-detail.php with full content + attachment download link
-   - GET /kiosk → render kiosk.php, a full-screen auto-cycling display of active notices (JS auto-rotates every N seconds), designed for a physically mounted screen
-
-Every state-changing endpoint (POST/DELETE-style actions) must validate the CSRF token from Auth.php before processing.
-
-====================================================================
-PHASE 8: FRONTEND — VIEWS, AJAX POLLING & KIOSK MODE
-====================================================================
-1. Build /app/views/layouts/header.php and footer.php shared across admin and public views, with a responsive nav (hamburger on mobile per Phase 3 rules).
-2. Build /app/views/public/home.php — responsive notice card grid pulling initial data server-side (PHP), then use /assets/js/ajax-polling.js to fetch /api/notices/active every 30 seconds via fetch() and re-render the grid without a full page reload, so new notices appear "in real time" without the user refreshing.
-3. Build /app/views/public/notice-detail.php — full notice view with attachment download button, category badge, and posted date.
-4. Build /app/views/public/kiosk.php — full-screen, no-nav display mode. Use /assets/js/kiosk.js to auto-cycle through active notices every 8-10 seconds (fade transition), showing one notice at a time in large, readable typography sized per Phase 3's large-desktop breakpoint. Include a small clock/date display in a corner for a real notice-board feel.
-5. Build /app/views/admin/dashboard.php — stats cards in a responsive grid (1 column mobile, 3 columns desktop) + recent activity feed list.
-6. Build /app/views/admin/notices-list.php — responsive table (card-based rows on mobile using CSS, full table on desktop) with status/priority badges (color-coded per Phase 2 variables), edit/delete action buttons, and filter dropdowns.
-7. Build /app/views/admin/notice-form.php — form with title, rich-enough textarea for body, category dropdown, priority toggle, publish date/time picker, expiry date/time picker, and file attachment input. Client-side JS validation before submit (required fields, file size/type check) in addition to server-side validation.
-8. Build /app/views/admin/categories.php and users.php following the same responsive list/form pattern.
-9. Add a global toast/alert component (pure JS + CSS, no framework) for success/error feedback after form submissions, positioned top-right on desktop and top-center full-width on mobile.
-
-====================================================================
-PHASE 9: NOTIFICATIONS (OPTIONAL ENHANCEMENT)
-====================================================================
-1. Integrate PHPMailer (via Composer) to send an email to all registered viewer users when a new notice is published (triggered inside NoticeController's publish logic, run asynchronously or as a simple background-style loop for the project's scope).
-2. Add an in-app "unread notice count" badge on the public nav using localStorage to track last-seen notice ID/timestamp compared against the latest fetched notice from /api/notices/active.
-
-====================================================================
-PHASE 10: TESTING
-====================================================================
-1. Manually test full flows: Admin creates category → Admin creates notice (draft) → Admin publishes notice → Public home page shows it within 30s via AJAX polling → Public user searches/filters → Admin edits notice → change reflects → Admin deletes notice → disappears from public view → Activity log reflects every action.
-2. Test file upload validation: reject files over 5MB, reject non-pdf/jpg/png files.
-3. Test auth/authorization: viewer cannot access /admin/* routes, admin cannot access super_admin-only /admin/users routes.
-4. Test CSRF protection: submitting a form without a valid token should be rejected.
-5. Test responsiveness on: iPhone SE, iPhone 14 Pro, iPad, 1920x1080 desktop, and the kiosk.php view on a simulated large display (test at 1920x1080 and 2560x1440).
-6. Document all test cases and results in /docs/TESTING.md (created in Phase 11).
-
-====================================================================
-PHASE 11: DOCUMENTATION (FOR ACADEMIC SUBMISSION)
-====================================================================
-Generate a /docs folder containing:
-
-1. SYSTEM_DESIGN.md — system architecture, use case diagram (text/markdown description covering Admin and Viewer actors), ER diagram of the PostgreSQL schema (described in markdown table form matching Phase 4), and explanation of the real-time update mechanism (AJAX polling) and why it was chosen over WebSockets for this project's scope.
-2. API_DOCUMENTATION.md — full endpoint reference (all routes from Phase 7) with request/response examples in JSON, including which routes require authentication and which roles can access them.
-3. USER_MANUAL.md — non-technical guide covering: how to log in, how admins post/edit/delete notices, how viewers browse/search notices, and how the kiosk display mode works. Use [SCREENSHOT: description] placeholders.
-4. TESTING.md — test cases from Phase 10 in a markdown table (Test Case | Steps | Expected Result | Actual Result | Pass/Fail).
-5. Update root README.md with: project title, abstract (matching the academic abstract provided), full tech stack, local setup instructions (Composer install, PostgreSQL setup via schema.sql/seed.sql, .env configuration, running via PHP's built-in server or XAMPP/Apache), and links to all /docs files.
-
-====================================================================
-EXECUTION INSTRUCTION
-====================================================================
-Work through Phases 0 to 11 sequentially. After completing each phase, output a short summary of what was created/changed before proceeding to the next phase. If any phase depends on a decision not specified above (e.g., exact AJAX polling interval, exact file size limits), choose a sensible default, document the choice with a code comment, and continue without stopping.
+Recommended Database Tables: users, roles, faculties, departments,
+programmes, levels, categories, notices, notice_attachments,
+notice_views, bookmarks, notifications, activity_logs, archived_notices.

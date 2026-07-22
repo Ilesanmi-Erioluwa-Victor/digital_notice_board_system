@@ -1,10 +1,4 @@
 <?php
-/**
- * Notice Model — Database interaction for the notices table.
- *
- * The core model handling notice CRUD, active notice queries,
- * search, pagination, and filtering by category.
- */
 
 namespace App\Models;
 
@@ -19,49 +13,47 @@ class Notice
         $this->db = Database::getInstance();
     }
 
-    /**
-     * Create a new notice.
-     *
-     * @param array $data Associative array with notice fields
-     * @return int New notice ID
-     */
     public function create(array $data): int
     {
         $this->db->execute(
-            'INSERT INTO notices (title, body, category_id, posted_by, priority, status, publish_at, expires_at)
-             VALUES (:title, :body, :category_id, :posted_by, :priority, :status, :publish_at, :expires_at)',
+            'INSERT INTO notices (title, body, category_id, posted_by, priority, status, approval_status, approved_by, rejection_reason, is_pinned, target_audience_type, target_ids, publish_at, expires_at)
+             VALUES (:title, :body, :category_id, :posted_by, :priority, :status, :approval_status, :approved_by, :rejection_reason, :is_pinned, :target_audience_type, :target_ids, :publish_at, :expires_at)',
             [
-                'title'       => $data['title'],
-                'body'        => $data['body'],
-                'category_id' => $data['category_id'] ?? null,
-                'posted_by'   => $data['posted_by'] ?? null,
-                'priority'    => $data['priority'] ?? 'normal',
-                'status'      => $data['status'] ?? 'draft',
-                'publish_at'  => $data['publish_at'] ?? null,
-                'expires_at'  => $data['expires_at'] ?? null,
+                'title'               => $data['title'],
+                'body'                => $data['body'],
+                'category_id'         => $data['category_id'] ?? null,
+                'posted_by'           => $data['posted_by'] ?? null,
+                'priority'            => $data['priority'] ?? 'medium',
+                'status'              => $data['status'] ?? 'draft',
+                'approval_status'     => $data['approval_status'] ?? 'none',
+                'approved_by'         => $data['approved_by'] ?? null,
+                'rejection_reason'    => $data['rejection_reason'] ?? null,
+                'is_pinned'           => $data['is_pinned'] ?? false,
+                'target_audience_type' => $data['target_audience_type'] ?? 'everyone',
+                'target_ids'          => isset($data['target_ids']) ? '{' . implode(',', array_map('intval', (array)$data['target_ids'])) . '}' : '{}',
+                'publish_at'          => $data['publish_at'] ?? null,
+                'expires_at'          => $data['expires_at'] ?? null,
             ]
         );
         return (int) $this->db->lastInsertId('notices_id_seq');
     }
 
-    /**
-     * Update an existing notice.
-     *
-     * @param int   $id
-     * @param array $data Associative array of fields to update
-     * @return int Affected rows
-     */
     public function update(int $id, array $data): int
     {
         $fields = [];
         $params = ['id' => $id];
 
-        $allowed = ['title', 'body', 'category_id', 'priority', 'status', 'publish_at', 'expires_at'];
+        $allowed = ['title', 'body', 'category_id', 'priority', 'status', 'approval_status', 'approved_by', 'rejection_reason', 'is_pinned', 'target_audience_type', 'publish_at', 'expires_at'];
         foreach ($allowed as $field) {
             if (array_key_exists($field, $data)) {
                 $fields[] = "$field = :$field";
                 $params[$field] = $data[$field];
             }
+        }
+
+        if (array_key_exists('target_ids', $data)) {
+            $fields[] = 'target_ids = :target_ids';
+            $params['target_ids'] = '{' . implode(',', array_map('intval', (array)$data['target_ids'])) . '}';
         }
 
         if (empty($fields)) {
@@ -74,12 +66,6 @@ class Notice
         return $this->db->execute($sql, $params);
     }
 
-    /**
-     * Delete a notice by ID.
-     *
-     * @param int $id
-     * @return int Affected rows
-     */
     public function delete(int $id): int
     {
         return $this->db->execute(
@@ -88,12 +74,6 @@ class Notice
         );
     }
 
-    /**
-     * Find a single notice by ID with related category and author info.
-     *
-     * @param int $id
-     * @return array|null
-     */
     public function findById(int $id): ?array
     {
         return $this->db->fetchOne(
@@ -106,13 +86,6 @@ class Notice
         );
     }
 
-    /**
-     * Get all currently active notices (published, within schedule).
-     * An active notice has status='published', publish_at <= NOW(),
-     * and (expires_at IS NULL OR expires_at > NOW()).
-     *
-     * @return array
-     */
     public function getActive(): array
     {
         return $this->db->fetchAll(
@@ -120,19 +93,13 @@ class Notice
              FROM notices n
              LEFT JOIN categories c ON n.category_id = c.id
              LEFT JOIN users u ON n.posted_by = u.id
-             WHERE n.status = \'published\'
+             WHERE n.status IN (\'approved\', \'published\')
                AND n.publish_at <= NOW()
                AND (n.expires_at IS NULL OR n.expires_at > NOW())
-             ORDER BY n.priority DESC, n.created_at DESC'
+             ORDER BY n.is_pinned DESC, n.priority DESC, n.created_at DESC'
         );
     }
 
-    /**
-     * Get notices filtered by category ID.
-     *
-     * @param int $categoryId
-     * @return array
-     */
     public function getByCategory(int $categoryId): array
     {
         return $this->db->fetchAll(
@@ -145,13 +112,118 @@ class Notice
         );
     }
 
-    /**
-     * Search notices by keyword in title or body.
-     * Uses PostgreSQL ILIKE for case-insensitive matching.
-     *
-     * @param string $keyword
-     * @return array
-     */
+    public function getPending(): array
+    {
+        return $this->db->fetchAll(
+            'SELECT n.*, c.name AS category_name, u.name AS author_name
+             FROM notices n
+             LEFT JOIN categories c ON n.category_id = c.id
+             LEFT JOIN users u ON n.posted_by = u.id
+             WHERE n.status = \'pending\' OR n.approval_status = \'pending\'
+             ORDER BY n.created_at ASC'
+        );
+    }
+
+    public function approve(int $id, int $approvedBy): int
+    {
+        return $this->db->execute(
+            'UPDATE notices SET status = \'approved\', approval_status = \'approved\', approved_by = :approved_by, rejection_reason = NULL, updated_at = NOW()
+             WHERE id = :id',
+            ['id' => $id, 'approved_by' => $approvedBy]
+        );
+    }
+
+    public function reject(int $id, int $approvedBy, string $reason): int
+    {
+        return $this->db->execute(
+            'UPDATE notices SET status = \'rejected\', approval_status = \'rejected\', approved_by = :approved_by, rejection_reason = :reason, updated_at = NOW()
+             WHERE id = :id',
+            ['id' => $id, 'approved_by' => $approvedBy, 'reason' => $reason]
+        );
+    }
+
+    public function getPinned(): array
+    {
+        return $this->db->fetchAll(
+            'SELECT n.*, c.name AS category_name, u.name AS author_name
+             FROM notices n
+             LEFT JOIN categories c ON n.category_id = c.id
+             LEFT JOIN users u ON n.posted_by = u.id
+             WHERE n.is_pinned = TRUE
+               AND n.status IN (\'approved\', \'published\')
+               AND n.publish_at <= NOW()
+               AND (n.expires_at IS NULL OR n.expires_at > NOW())
+             ORDER BY n.created_at DESC'
+        );
+    }
+
+    public function getByAudience(string $audienceType, array $targetIds = []): array
+    {
+        $params = ['audience_type' => $audienceType];
+        $targetCondition = '';
+
+        if (!empty($targetIds)) {
+            $placeholders = [];
+            foreach ($targetIds as $i => $tid) {
+                $key = 'tid_' . $i;
+                $placeholders[] = ':' . $key;
+                $params[$key] = (int)$tid;
+            }
+            $targetCondition = ' AND n.target_ids && ARRAY[' . implode(',', $placeholders) . ']';
+        }
+
+        return $this->db->fetchAll(
+            'SELECT n.*, c.name AS category_name, u.name AS author_name
+             FROM notices n
+             LEFT JOIN categories c ON n.category_id = c.id
+             LEFT JOIN users u ON n.posted_by = u.id
+             WHERE (n.target_audience_type = :audience_type OR n.target_audience_type = \'everyone\')
+               AND n.status IN (\'approved\', \'published\')
+               AND n.publish_at <= NOW()
+               AND (n.expires_at IS NULL OR n.expires_at > NOW())' . $targetCondition . '
+             ORDER BY n.is_pinned DESC, n.created_at DESC',
+            $params
+        );
+    }
+
+    public function getUpcomingEvents(int $limit = 10): array
+    {
+        return $this->db->fetchAll(
+            'SELECT n.*, c.name AS category_name
+             FROM notices n
+             LEFT JOIN categories c ON n.category_id = c.id
+             WHERE n.status IN (\'approved\', \'published\')
+               AND n.publish_at > NOW()
+               AND (n.expires_at IS NULL OR n.expires_at > NOW())
+             ORDER BY n.publish_at ASC
+             LIMIT :limit',
+            ['limit' => $limit]
+        );
+    }
+
+    public function duplicate(int $id): int
+    {
+        $original = $this->findById($id);
+        if (!$original) {
+            return 0;
+        }
+
+        return $this->create([
+            'title'               => $original['title'] . ' (Copy)',
+            'body'                => $original['body'],
+            'category_id'         => $original['category_id'],
+            'posted_by'           => $original['posted_by'],
+            'priority'            => $original['priority'],
+            'status'              => 'draft',
+            'approval_status'     => 'none',
+            'is_pinned'           => false,
+            'target_audience_type' => $original['target_audience_type'],
+            'target_ids'          => $original['target_ids'],
+            'publish_at'          => null,
+            'expires_at'          => null,
+        ]);
+    }
+
     public function search(string $keyword): array
     {
         $like = '%' . $keyword . '%';
@@ -159,22 +231,13 @@ class Notice
             'SELECT n.*, c.name AS category_name
              FROM notices n
              LEFT JOIN categories c ON n.category_id = c.id
-             WHERE n.status = \'published\'
+             WHERE n.status IN (\'approved\', \'published\')
                AND (n.title ILIKE :keyword OR n.body ILIKE :keyword)
-             ORDER BY n.created_at DESC',
+             ORDER BY n.is_pinned DESC, n.created_at DESC',
             ['keyword' => $like]
         );
     }
 
-    /**
-     * Get paginated list of notices (optionally filtered).
-     *
-     * @param int    $page      Current page number (1-indexed)
-     * @param int    $perPage   Items per page
-     * @param string $statusFilter Optional status filter
-     * @param int|null $categoryFilter Optional category ID filter
-     * @return array ['notices' => array, 'total' => int, 'pages' => int]
-     */
     public function getPaginated(
         int $page = 1,
         int $perPage = 10,
@@ -199,7 +262,6 @@ class Notice
 
         $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
-        // Count query uses only filter params, NOT limit/offset
         $countParams = array_diff_key($params, ['limit' => true, 'offset' => true]);
         $countSql = 'SELECT COUNT(*) AS total FROM notices n ' . $whereClause;
         $countResult = $this->db->fetchOne($countSql, $countParams);
@@ -210,7 +272,7 @@ class Notice
                     LEFT JOIN categories c ON n.category_id = c.id
                     LEFT JOIN users u ON n.posted_by = u.id
                     ' . $whereClause . '
-                    ORDER BY n.created_at DESC
+                    ORDER BY n.is_pinned DESC, n.created_at DESC
                     LIMIT :limit OFFSET :offset';
 
         $notices = $this->db->fetchAll($dataSql, $params);
@@ -223,22 +285,18 @@ class Notice
         ];
     }
 
-    /**
-     * Get the most viewed notices based on a simple view counter.
-     * Note: This is a stub — extend with a views column or separate view tracking.
-     *
-     * @param int $limit
-     * @return array
-     */
     public function getMostViewed(int $limit = 5): array
     {
-        // Returns recently published notices as a proxy for "most viewed"
         return $this->db->fetchAll(
-            'SELECT n.*, c.name AS category_name
+            'SELECT n.*, c.name AS category_name, COUNT(nv.id) AS view_count
              FROM notices n
              LEFT JOIN categories c ON n.category_id = c.id
-             WHERE n.status = \'published\'
-             ORDER BY n.created_at DESC
+             LEFT JOIN notice_views nv ON n.id = nv.notice_id
+             WHERE n.status IN (\'approved\', \'published\')
+               AND n.publish_at <= NOW()
+               AND (n.expires_at IS NULL OR n.expires_at > NOW())
+             GROUP BY n.id, c.name
+             ORDER BY view_count DESC, n.is_pinned DESC
              LIMIT :limit',
             ['limit' => $limit]
         );

@@ -1,45 +1,51 @@
 <?php
-/**
- * PublicController — Handles public-facing pages (home, notice detail, kiosk).
- */
 
 namespace App\Controllers;
 
+use App\Core\Auth;
 use App\Models\Notice;
 use App\Models\Category;
-use App\Models\Attachment;
+use App\Models\NoticeAttachment;
+use App\Models\NoticeView;
+use App\Models\Bookmark;
 
 class PublicController
 {
     private Notice $noticeModel;
     private Category $categoryModel;
-    private Attachment $attachmentModel;
+    private NoticeAttachment $attachmentModel;
 
     public function __construct()
     {
         $this->noticeModel     = new Notice();
         $this->categoryModel   = new Category();
-        $this->attachmentModel = new Attachment();
+        $this->attachmentModel = new NoticeAttachment();
     }
 
-    /**
-     * Public home page — shows active notices in a responsive grid.
-     * Initial data rendered server-side; AJAX polling updates the grid.
-     * GET /
-     */
-    public function home(array $params = []): void
+    public function index(array $params = []): void
     {
-        $notices    = $this->noticeModel->getActive();
+        $user = Auth::isLoggedIn() ? Auth::currentUser() : null;
+
+        if ($user) {
+            $notices = $this->noticeModel->getByAudience($user['role'], []);
+        } else {
+            $notices = $this->noticeModel->getActive();
+        }
+
+        $pinnedNotices = array_filter($notices, function ($n) {
+            return !empty($n['is_pinned']);
+        });
+        $regularNotices = array_filter($notices, function ($n) {
+            return empty($n['is_pinned']);
+        });
+
         $categories = $this->categoryModel->all();
+
         require __DIR__ . '/../Views/layouts/header.php';
         require __DIR__ . '/../Views/public/home.php';
         require __DIR__ . '/../Views/layouts/footer.php';
     }
 
-    /**
-     * Notice detail page — full content with attachment download links.
-     * GET /notice/{id}
-     */
     public function noticeDetail(array $params = []): void
     {
         $id = (int) ($params['id'] ?? 0);
@@ -52,20 +58,23 @@ class PublicController
             return;
         }
 
+        $isBookmarked = false;
+        $user = Auth::currentUser();
+        if ($user) {
+            $viewModel = new NoticeView();
+            $viewModel->trackView($id, $user['id']);
+            $bookmarkModel = new Bookmark();
+            $isBookmarked = $bookmarkModel->isBookmarked($user['id'], $id);
+        }
+
         $attachments = $this->attachmentModel->findByNoticeId($id);
         require __DIR__ . '/../Views/layouts/header.php';
         require __DIR__ . '/../Views/public/notice-detail.php';
         require __DIR__ . '/../Views/layouts/footer.php';
     }
 
-    /**
-     * Kiosk display mode — full-screen auto-cycling of active notices.
-     * No navigation, just large typography and auto-rotation via JS.
-     * GET /kiosk
-     */
     public function kiosk(array $params = []): void
     {
-        // Kiosk has its own full-screen layout (no header/footer)
         require __DIR__ . '/../Views/public/kiosk.php';
     }
 }

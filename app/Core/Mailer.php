@@ -1,16 +1,8 @@
 <?php
-/**
- * Mailer — PHPMailer Wrapper
- *
- * Sends email notifications to registered viewer users when a new notice
- * is published. Configured via .env MAIL_HOST, MAIL_USER, MAIL_PASSWORD.
- *
- * This is a best-effort notification system; errors are logged but do not
- * block the main application flow.
- */
 
 namespace App\Core;
 
+use App\Models\Notification;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -18,9 +10,6 @@ class Mailer
 {
     private ?PHPMailer $mailer = null;
 
-    /**
-     * Initialize PHPMailer with SMTP settings from config.
-     */
     public function __construct()
     {
         if (empty(MAIL_HOST) || empty(MAIL_USER)) {
@@ -43,21 +32,28 @@ class Mailer
         }
     }
 
-    /**
-     * Send a notification email about a new notice to a recipient.
-     *
-     * @param string $toEmail  Recipient email
-     * @param string $toName   Recipient name
-     * @param string $noticeTitle  Title of the published notice
-     * @param string $noticeUrl    URL to view the notice
-     * @return bool True if sent successfully
-     */
     public function sendNoticeNotification(
+        int $userId,
         string $toEmail,
         string $toName,
         string $noticeTitle,
         string $noticeUrl
     ): bool {
+        // Create in-app notification
+        try {
+            $notification = new Notification();
+            $notification->create(
+                $userId,
+                'notice',
+                'New Notice: ' . $noticeTitle,
+                'A new notice "' . $noticeTitle . '" has been published.',
+                $noticeUrl
+            );
+        } catch (\Exception $e) {
+            error_log('In-app notification creation failed: ' . $e->getMessage());
+        }
+
+        // Send email via PHPMailer
         if ($this->mailer === null) {
             return false;
         }

@@ -4,98 +4,116 @@
 -- Run: psql -d digital_notice_board -f sql/seed.sql
 -- ==========================================================================
 
--- Clear existing data and reset auto-increment sequences
-TRUNCATE users, categories, notices, attachments, activity_logs RESTART IDENTITY CASCADE;
+TRUNCATE users, roles, faculties, departments, programmes, levels, categories, notices, notice_attachments, notice_views, bookmarks, notifications, activity_logs, password_resets RESTART IDENTITY CASCADE;
+
+-- ─── Roles ─────────────────────────────────────────────────────────────────
+INSERT INTO roles (name, description) VALUES
+    ('admin', 'Full system access: manage users, approve notices, view analytics'),
+    ('staff', 'Can create and submit notices for approval'),
+    ('student', 'Can view notices, bookmark, and track reading');
+
+-- ─── Faculties ─────────────────────────────────────────────────────────────
+INSERT INTO faculties (name, code, description) VALUES
+    ('Faculty of Science', 'SCI', 'Natural and applied sciences'),
+    ('Faculty of Engineering', 'ENG', 'Engineering and technology'),
+    ('Faculty of Arts', 'ART', 'Humanities and liberal arts');
+
+-- ─── Departments ───────────────────────────────────────────────────────────
+INSERT INTO departments (name, code, faculty_id, description) VALUES
+    ('Computer Science', 'CSC', 1, 'Computer science and informatics'),
+    ('Mathematics', 'MTH', 1, 'Pure and applied mathematics'),
+    ('Electrical Engineering', 'ELE', 2, 'Electrical and electronics engineering'),
+    ('Mechanical Engineering', 'MEC', 2, 'Mechanical and industrial engineering'),
+    ('English', 'ENG', 3, 'English language and literature');
+
+-- ─── Programmes ────────────────────────────────────────────────────────────
+INSERT INTO programmes (name, code, department_id, duration_years) VALUES
+    ('B.Sc. Computer Science', 'BSC-CSC', 1, 4),
+    ('B.Sc. Mathematics', 'BSC-MTH', 2, 4),
+    ('B.Eng. Electrical Engineering', 'BENG-ELE', 3, 5),
+    ('B.Eng. Mechanical Engineering', 'BENG-MEC', 4, 5),
+    ('B.A. English', 'BA-ENG', 5, 4);
+
+-- ─── Levels ────────────────────────────────────────────────────────────────
+INSERT INTO levels (name, sort_order) VALUES
+    ('100 Level', 1),
+    ('200 Level', 2),
+    ('300 Level', 3),
+    ('400 Level', 4),
+    ('500 Level', 5);
 
 -- ─── Users ─────────────────────────────────────────────────────────────────
--- Passwords are hashed with password_hash('password123', PASSWORD_DEFAULT).
--- The hashes below correspond to "password123" for all test accounts.
-INSERT INTO users (name, email, password_hash, role) VALUES
-    ('Super Admin', 'admin@example.com',
+INSERT INTO users (name, email, password_hash, role, staff_id, department_id, is_active) VALUES
+    ('System Admin', 'admin@example.com',
      '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
-     'super_admin'),
-    ('Department Admin', 'deptadmin@example.com',
+     'admin', 'ADM001', 1, TRUE),
+    ('Dr. Jane Staff', 'staff@example.com',
      '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
-     'admin'),
-    ('Admin User Two', 'admin2@example.com',
+     'staff', 'STF001', 1, TRUE),
+    ('Mr. Bob Staff', 'staff2@example.com',
      '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
-     'admin'),
-    ('John Viewer', 'viewer@example.com',
+     'staff', 'STF002', 3, TRUE),
+    ('Alice Student', 'student@example.com',
      '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
-     'viewer'),
-    ('Jane Viewer', 'jane@example.com',
+     'student', NULL, NULL, NULL, 1, TRUE),
+    ('Bob Student', 'student2@example.com',
      '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
-     'viewer'),
-    ('Bob Viewer', 'bob@example.com',
-     '$2y$10$wqT.BKaJ.kN9Buls6OMKS.jUkg2KRLdsa7K3qx6wJmkEAvnGU6wDC',
-     'viewer');
+     'student', NULL, NULL, NULL, 3, TRUE);
 
 -- ─── Categories ────────────────────────────────────────────────────────────
 INSERT INTO categories (name, description) VALUES
-    ('Academic', 'Academic announcements including results, schedules, and academic calendar updates'),
-    ('Administrative', 'Administrative notices from the management and administrative office'),
+    ('Academic', 'Academic announcements including results, schedules, and calendar updates'),
+    ('Administrative', 'Administrative notices from the management'),
     ('Events', 'Upcoming events, seminars, workshops, and social gatherings'),
-    ('Exams', 'Examination timetables, guidelines, and results release information'),
+    ('Exams', 'Examination timetables, guidelines, and results'),
     ('General', 'General announcements and miscellaneous information');
 
 -- ─── Notices ───────────────────────────────────────────────────────────────
--- 8 sample notices with varying statuses and priorities for testing.
-INSERT INTO notices (title, body, category_id, posted_by, priority, status, publish_at, expires_at, created_at) VALUES
-    ('Semester Examination Timetable Released',
-     'The examination timetable for the current semester has been published. All students are advised to check their examination schedules and report any clashes to the Academic Office before the deadline. The examination period will run from the 15th to the 30th of next month.',
-     4, 1, 'urgent', 'published',
-     NOW() - INTERVAL '1 day', NOW() + INTERVAL '30 days',
-     NOW() - INTERVAL '5 days'),
+INSERT INTO notices (title, body, category_id, posted_by, priority, status, approval_status, approved_by, is_pinned, target_audience_type, publish_at, expires_at, created_at) VALUES
+    ('Semester Exam Timetable',
+     'The examination timetable has been published. Check your schedules and report any clashes.',
+     4, 1, 'high', 'published', 'approved', 1, TRUE, 'everyone',
+     NOW() - INTERVAL '1 day', NOW() + INTERVAL '30 days', NOW() - INTERVAL '5 days'),
 
-    ('Maintenance Notice: Building B Closure',
-     'Building B will be closed for maintenance from Friday 6:00 PM to Monday 6:00 AM. All offices and classrooms in Building B will be inaccessible during this period. Staff and students are advised to make alternative arrangements.',
-     2, 2, 'urgent', 'published',
-     NOW() - INTERVAL '2 days', NOW() + INTERVAL '7 days',
-     NOW() - INTERVAL '6 days'),
+    ('Building B Closure',
+     'Building B will be closed for maintenance from Friday 6 PM to Monday 6 AM.',
+     2, 2, 'high', 'published', 'approved', 1, FALSE, 'everyone',
+     NOW() - INTERVAL '2 days', NOW() + INTERVAL '7 days', NOW() - INTERVAL '6 days'),
 
-    ('Annual Sports Day Registration',
-     'Registration for the Annual Sports Day is now open. Interested participants should sign up at the Sports Office or register online via the student portal. Events include athletics, football, basketball, and table tennis.',
-     3, 3, 'normal', 'published',
-     NOW() - INTERVAL '3 days', NOW() + INTERVAL '60 days',
-     NOW() - INTERVAL '7 days'),
+    ('Annual Sports Day',
+     'Registration is open for the Annual Sports Day. Sign up at the Sports Office.',
+     3, 2, 'medium', 'published', 'approved', 1, FALSE, 'everyone',
+     NOW() - INTERVAL '3 days', NOW() + INTERVAL '60 days', NOW() - INTERVAL '7 days'),
 
-    ('New Library Operating Hours',
-     'The library will be extending its operating hours during the examination period. New hours will be 7:00 AM to 10:00 PM, Monday through Saturday, and 12:00 PM to 8:00 PM on Sundays.',
-     1, 1, 'normal', 'published',
-     NOW() - INTERVAL '4 days', NULL,
-     NOW() - INTERVAL '8 days'),
+    ('New Library Hours',
+     'Library hours extended during exams: 7 AM to 10 PM weekdays.',
+     1, 1, 'low', 'published', 'approved', 1, FALSE, 'everyone',
+     NOW() - INTERVAL '4 days', NULL, NOW() - INTERVAL '8 days'),
 
-    ('ICT Workshop: Introduction to Web Development',
-     'The ICT department is organizing a 3-day workshop on Introduction to Web Development using HTML, CSS, and JavaScript. The workshop is open to all students and will be held in the ICT Lab, Room 204. No prior programming experience required.',
-     3, 2, 'normal', 'published',
-     NOW() - INTERVAL '1 day', NOW() + INTERVAL '14 days',
-     NOW() - INTERVAL '3 days'),
+    ('ICT Workshop',
+     'Three-day workshop on Web Development. Open to all students. No experience needed.',
+     3, 2, 'medium', 'published', 'approved', 1, FALSE, 'students',
+     NOW() - INTERVAL '1 day', NOW() + INTERVAL '14 days', NOW() - INTERVAL '3 days'),
 
-    ('Staff Vacancy Announcement',
-     'Applications are invited for the position of Senior Lecturer in the Department of Computer Science. Candidates must possess a PhD in Computer Science or a related field with at least 5 years of teaching experience. Application deadline is 30 days from today.',
-     2, 1, 'normal', 'published',
-     NOW(), NOW() + INTERVAL '30 days',
-     NOW() - INTERVAL '2 days'),
+    ('Staff Vacancy',
+     'Applications invited for Senior Lecturer position in Computer Science.',
+     2, 1, 'high', 'published', 'approved', 1, FALSE, 'staff',
+     NOW(), NOW() + INTERVAL '30 days', NOW() - INTERVAL '2 days'),
 
-    ('Draft Notice: Proposed Academic Calendar 2025',
-     'The proposed academic calendar for the 2025 session is under review. Stakeholders are invited to submit feedback to the Academic Office before the final approval.',
-     1, 1, 'normal', 'draft',
-     NULL, NULL,
-     NOW() - INTERVAL '1 day'),
+    ('Draft: Proposed Calendar',
+     'The proposed academic calendar for next session is under review.',
+     1, 2, 'medium', 'draft', 'none', NULL, FALSE, 'everyone',
+     NULL, NULL, NOW() - INTERVAL '1 day'),
 
-    ('Archived Notice: Previous Semester Results',
-     'This notice contained the results for the previous semester and has been archived. Current semester results will be published soon.',
-     4, 1, 'normal', 'archived',
-     NOW() - INTERVAL '90 days', NOW() - INTERVAL '30 days',
-     NOW() - INTERVAL '95 days');
+    ('Pending: Lab Maintenance',
+     'Requesting approval for lab equipment maintenance schedule.',
+     2, 3, 'medium', 'pending', 'pending', NULL, FALSE, 'department',
+     NULL, NULL, NOW());
 
--- ─── Activity Log ──────────────────────────────────────────────────────────
-INSERT INTO activity_logs (admin_id, action, notice_id, details, timestamp) VALUES
-    (1, 'published', 1, 'Published examination timetable', NOW() - INTERVAL '1 day'),
-    (2, 'published', 2, 'Published maintenance notice for Building B', NOW() - INTERVAL '2 days'),
-    (3, 'published', 3, 'Published sports day registration', NOW() - INTERVAL '3 days'),
-    (1, 'published', 4, 'Published library new operating hours', NOW() - INTERVAL '4 days'),
-    (2, 'published', 5, 'Published ICT workshop notice', NOW() - INTERVAL '1 day'),
-    (1, 'published', 6, 'Published staff vacancy announcement', NOW()),
-    (1, 'created', 7, 'Created draft academic calendar notice', NOW() - INTERVAL '1 day'),
-    (1, 'archived', 8, 'Archived previous semester results', NOW() - INTERVAL '30 days');
+-- ─── Activity Logs ─────────────────────────────────────────────────────────
+INSERT INTO activity_logs (user_id, action, entity_type, entity_id, details, timestamp) VALUES
+    (1, 'approve', 'notice', 1, 'Approved notice: Semester Exam Timetable', NOW() - INTERVAL '1 day'),
+    (1, 'approve', 'notice', 2, 'Approved notice: Building B Closure', NOW() - INTERVAL '2 days'),
+    (2, 'create', 'notice', 5, 'Created notice: ICT Workshop', NOW() - INTERVAL '3 days'),
+    (1, 'approve', 'notice', 5, 'Approved notice: ICT Workshop', NOW() - INTERVAL '2 days'),
+    (3, 'create', 'notice', 8, 'Created notice: Lab Maintenance', NOW());

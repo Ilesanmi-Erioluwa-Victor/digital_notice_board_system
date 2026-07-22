@@ -5,6 +5,20 @@
             <h1><?= isset($notice) ? 'Edit Notice' : 'Create Notice' ?></h1>
         </div>
 
+        <?php if (isset($notice)): ?>
+        <div class="card mt-2 mb-2" style="border-left: 4px solid var(--color-info);">
+            <div class="card-body flex flex-wrap gap-2 items-center">
+                <span><strong>Status:</strong> <?= htmlspecialchars($notice['status'] ?? 'draft') ?></span>
+                <?php if (!empty($notice['approval_status'])): ?>
+                    <span><strong>Approval:</strong> <?= htmlspecialchars(ucfirst($notice['approval_status'])) ?></span>
+                <?php endif; ?>
+                <?php if (!empty($notice['approval_comment'])): ?>
+                    <span><strong>Note:</strong> <?= htmlspecialchars($notice['approval_comment']) ?></span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <div class="card notice-form-wrapper">
             <div class="card-body">
                 <form id="notice-form" method="POST" action="<?= isset($notice) ? '/admin/notices/edit/' . $notice['id'] : '/admin/notices/create' ?>" enctype="multipart/form-data">
@@ -38,8 +52,9 @@
                         <div class="form-group">
                             <label for="priority">Priority</label>
                             <select id="priority" name="priority" class="form-control">
-                                <option value="normal" <?= (isset($notice) && ($notice['priority'] ?? '') === 'normal') ? 'selected' : '' ?>>Normal</option>
-                                <option value="urgent" <?= (isset($notice) && ($notice['priority'] ?? '') === 'urgent') ? 'selected' : '' ?>>Urgent</option>
+                                <option value="low" <?= (isset($notice) && ($notice['priority'] ?? '') === 'low') ? 'selected' : '' ?>>Low</option>
+                                <option value="medium" <?= (isset($notice) && ($notice['priority'] ?? '') === 'medium') ? 'selected' : '' ?>>Medium</option>
+                                <option value="high" <?= (isset($notice) && ($notice['priority'] ?? '') === 'high') ? 'selected' : '' ?>>High</option>
                             </select>
                         </div>
                     </div>
@@ -49,7 +64,11 @@
                             <label for="status">Status</label>
                             <select id="status" name="status" class="form-control">
                                 <option value="draft" <?= (isset($notice) && ($notice['status'] ?? '') === 'draft') ? 'selected' : '' ?>>Draft</option>
-                                <option value="published" <?= (isset($notice) && ($notice['status'] ?? '') === 'published') ? 'selected' : '' ?>>Published</option>
+                                <option value="pending" <?= (isset($notice) && ($notice['status'] ?? '') === 'pending') ? 'selected' : '' ?>>Pending</option>
+                                <?php if (isset($isAdmin) && $isAdmin): ?>
+                                    <option value="approved" <?= (isset($notice) && ($notice['status'] ?? '') === 'approved') ? 'selected' : '' ?>>Approved</option>
+                                    <option value="published" <?= (isset($notice) && ($notice['status'] ?? '') === 'published') ? 'selected' : '' ?>>Published</option>
+                                <?php endif; ?>
                                 <option value="archived" <?= (isset($notice) && ($notice['status'] ?? '') === 'archived') ? 'selected' : '' ?>>Archived</option>
                             </select>
                         </div>
@@ -58,6 +77,33 @@
                             <input type="datetime-local" id="publish_at" name="publish_at" class="form-control"
                                    value="<?= isset($notice['publish_at']) ? date('Y-m-d\TH:i', strtotime($notice['publish_at'])) : '' ?>">
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="target_audience_type">Target Audience</label>
+                        <select id="target_audience_type" name="target_audience_type" class="form-control">
+                            <option value="everyone" <?= (isset($notice) && ($notice['target_audience_type'] ?? '') === 'everyone') ? 'selected' : '' ?>>Everyone</option>
+                            <option value="faculty" <?= (isset($notice) && ($notice['target_audience_type'] ?? '') === 'faculty') ? 'selected' : '' ?>>Faculty</option>
+                            <option value="department" <?= (isset($notice) && ($notice['target_audience_type'] ?? '') === 'department') ? 'selected' : '' ?>>Department</option>
+                            <option value="programme" <?= (isset($notice) && ($notice['target_audience_type'] ?? '') === 'programme') ? 'selected' : '' ?>>Programme</option>
+                            <option value="level" <?= (isset($notice) && ($notice['target_audience_type'] ?? '') === 'level') ? 'selected' : '' ?>>Level</option>
+                            <option value="staff" <?= (isset($notice) && ($notice['target_audience_type'] ?? '') === 'staff') ? 'selected' : '' ?>>Staff</option>
+                            <option value="students" <?= (isset($notice) && ($notice['target_audience_type'] ?? '') === 'students') ? 'selected' : '' ?>>Students</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="target_ids">Target IDs <span class="text-muted">(comma-separated IDs, e.g. department IDs, programme IDs)</span></label>
+                        <input type="text" id="target_ids" name="target_ids" class="form-control"
+                               value="<?= htmlspecialchars($notice['target_ids'] ?? '') ?>"
+                               placeholder="Leave blank for all">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="is_pinned" value="1" <?= (isset($notice) && !empty($notice['is_pinned'])) ? 'checked' : '' ?>>
+                            Pin this notice
+                        </label>
                     </div>
 
                     <div class="form-row">

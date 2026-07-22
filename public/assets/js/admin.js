@@ -5,6 +5,9 @@
  * - Confirm dialogs for delete actions
  * - Form validation (client-side)
  * - File upload size/type checks
+ * - Approve/reject confirmations
+ * - Target audience type handler
+ * - Analytics chart rendering
  */
 
 (function () {
@@ -99,4 +102,63 @@
       }
     }
   });
+
+  // ─── Approve / Reject Confirmation ────────────────────────────────────────
+
+  document.addEventListener('click', function (e) {
+    var target = e.target.closest('.btn-approve, .btn-reject');
+    if (!target) return;
+
+    var action = target.classList.contains('btn-approve') ? 'approve' : 'reject';
+    if (!confirm('Are you sure you want to ' + action + ' this notice?')) {
+      e.preventDefault();
+    }
+  });
+
+  // ─── Target Audience Type Handler ─────────────────────────────────────────
+
+  document.addEventListener('change', function (e) {
+    if (e.target.matches('#audience_type')) {
+      var targetIdsGroup = document.getElementById('target-ids-group');
+      if (targetIdsGroup) {
+        targetIdsGroup.style.display = e.target.value === 'specific' ? 'block' : 'none';
+      }
+    }
+  });
+
+  // ─── Analytics Chart Rendering ────────────────────────────────────────────
+
+  window.renderBarChart = function (containerId, data, labelKey, valueKey) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.classList.add('bar-chart');
+    container.innerHTML = '';
+
+    data.forEach(function (item) {
+      var barItem = document.createElement('div');
+      barItem.className = 'bar-item';
+
+      var label = document.createElement('span');
+      label.className = 'bar-label';
+      label.textContent = item[labelKey];
+
+      var fill = document.createElement('div');
+      fill.className = 'bar-fill';
+
+      var fillInner = document.createElement('div');
+      fillInner.className = 'bar-fill-inner';
+      fillInner.style.width = item[valueKey] + '%';
+
+      var value = document.createElement('span');
+      value.className = 'bar-value';
+      value.textContent = item[valueKey];
+
+      fill.appendChild(fillInner);
+      barItem.appendChild(label);
+      barItem.appendChild(fill);
+      barItem.appendChild(value);
+      container.appendChild(barItem);
+    });
+  };
 })();

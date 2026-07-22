@@ -9,14 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/style.css">
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: #0F172A;
-        }
-        .kiosk-wrapper {
-            transition: background 500ms;
-        }
+        body{margin:0;overflow:hidden;background:#0F172A}.kiosk-wrapper{transition:background 500ms}.kiosk-notice .priority-high{color:#fca5a5}.kiosk-notice .priority-medium{color:#fcd34d}.kiosk-notice .priority-low{color:#94a3b8}
     </style>
 </head>
 <body>

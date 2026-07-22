@@ -1,16 +1,8 @@
-/**
- * Kiosk Display Mode
- *
- * Full-screen auto-cycling display of active notices designed for a
- * physically mounted screen. Rotates through notices every 8-10 seconds
- * with a fade transition. Displays a live clock in the corner.
- */
-
 (function () {
   'use strict';
 
-  var ROTATION_INTERVAL = 9000; // 9 seconds — matches KIOSK_ROTATION_INTERVAL config
-  var POLL_INTERVAL = 30000;    // Refresh notice list every 30s
+  var ROTATION_INTERVAL = 9000;
+  var POLL_INTERVAL = 30000;
   var notices = [];
   var currentIndex = 0;
   var rotationTimer = null;
@@ -19,9 +11,6 @@
   var kioskContent = document.getElementById('kiosk-content');
   var kioskClock = document.getElementById('kiosk-clock');
 
-  /**
-   * Update the clock display every second.
-   */
   function updateClock() {
     if (!kioskClock) return;
     var now = new Date();
@@ -39,10 +28,6 @@
     kioskClock.textContent = dateStr + ' | ' + timeStr;
   }
 
-  /**
-   * Fetch notices from the API.
-   * @returns {Promise<Array>}
-   */
   function fetchNotices() {
     return fetch('/api/notices/active')
       .then(function (r) {
@@ -55,52 +40,52 @@
       });
   }
 
-  /**
-   * Show the notice at the given index with a fade transition.
-   * @param {number} index
-   */
   function showNotice(index) {
     if (!notices.length || !kioskContent || !kioskTitle) return;
 
     var notice = notices[index % notices.length];
     if (!notice) return;
 
-    // Fade out, update, fade in
     kioskContent.style.opacity = '0';
     kioskTitle.style.opacity = '0';
 
     setTimeout(function () {
       kioskTitle.textContent = notice.title || 'Notice';
-      kioskContent.innerHTML = (notice.body || '')
-        .replace(/\n/g, '<br>');
 
-      if (notice.priority === 'urgent') {
+      if (notice.priority === 'high') {
         kioskTitle.style.color = '#fca5a5';
+      } else if (notice.priority === 'medium') {
+        kioskTitle.style.color = '#fcd34d';
       } else {
         kioskTitle.style.color = '#ffffff';
       }
+
+      var priorityClass = 'priority-low';
+      if (notice.priority === 'high') priorityClass = 'priority-high';
+      else if (notice.priority === 'medium') priorityClass = 'priority-medium';
+
+      kioskContent.innerHTML =
+        '<div class="' + priorityClass + '">' +
+        (notice.body || '').replace(/\n/g, '<br>') +
+        '</div>';
 
       kioskContent.style.opacity = '1';
       kioskTitle.style.opacity = '1';
     }, 300);
   }
 
-  /**
-   * Advance to the next notice.
-   */
   function nextNotice() {
     if (notices.length === 0) return;
     currentIndex = (currentIndex + 1) % notices.length;
     showNotice(currentIndex);
   }
 
-  /**
-   * Update the notice list from the API and reset the rotation.
-   */
   function refreshNotices() {
     fetchNotices().then(function (data) {
       if (data && data.length > 0) {
-        notices = data;
+        var pinned = data.filter(function (n) { return n.is_pinned; });
+        var unpinned = data.filter(function (n) { return !n.is_pinned; });
+        notices = pinned.concat(unpinned);
         currentIndex = 0;
         showNotice(0);
       } else {
@@ -112,26 +97,18 @@
     });
   }
 
-  /**
-   * Initialize the kiosk display.
-   */
   function init() {
-    // Start the clock
     updateClock();
     setInterval(updateClock, 1000);
 
-    // Fetch initial notices, then poll every 30s
     refreshNotices();
     setInterval(refreshNotices, POLL_INTERVAL);
 
-    // Start rotation timer
     rotationTimer = setInterval(nextNotice, ROTATION_INTERVAL);
 
-    // Keyboard navigation (for testing)
     document.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
         nextNotice();
-        // Reset rotation timer
         clearInterval(rotationTimer);
         rotationTimer = setInterval(nextNotice, ROTATION_INTERVAL);
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
@@ -144,7 +121,6 @@
     });
   }
 
-  // Start when the DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {

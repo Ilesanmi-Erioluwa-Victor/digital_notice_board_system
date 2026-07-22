@@ -5,6 +5,9 @@
  * - Hamburger menu toggle for mobile navigation
  * - Toast notification system
  * - CSRF token injection for AJAX requests
+ * - Dark mode toggle
+ * - Bookmark toggle
+ * - Notice status/priority CSS classes
  */
 
 (function () {
@@ -134,4 +137,74 @@
       }, 4000);
     });
   });
+
+  // ─── Dark Mode Toggle ─────────────────────────────────────────────────────
+
+  (function() {
+    var toggle = document.getElementById('dark-mode-toggle');
+    var html = document.documentElement;
+
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      html.classList.add('dark-mode');
+    }
+
+    if (toggle) {
+      toggle.addEventListener('click', function() {
+        html.classList.toggle('dark-mode');
+        localStorage.setItem('darkMode',
+          html.classList.contains('dark-mode') ? 'enabled' : 'disabled'
+        );
+      });
+    }
+  })();
+
+  // ─── Bookmark Toggle ──────────────────────────────────────────────────────
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.bookmark-btn');
+    if (!btn) return;
+
+    var noticeId = btn.getAttribute('data-notice-id');
+    if (!noticeId) return;
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/notices/bookmark/' + noticeId, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.setRequestHeader('X-CSRF-TOKEN', getCsrfToken());
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        btn.classList.toggle('active');
+        showToast(btn.classList.contains('active') ? 'Bookmarked' : 'Bookmark removed', 'success');
+      } else {
+        showToast('Failed to toggle bookmark', 'error');
+      }
+    };
+    xhr.onerror = function () {
+      showToast('Network error', 'error');
+    };
+    xhr.send('_token=' + encodeURIComponent(getCsrfToken()));
+  });
+
+  // ─── Notice Status Colors ─────────────────────────────────────────────────
+
+  window.getStatusBadgeClass = function (status) {
+    var map = {
+      'published': 'badge-published',
+      'draft': 'badge-draft',
+      'archived': 'badge-archived',
+      'pending': 'badge-pending',
+      'approved': 'badge-approved',
+      'rejected': 'badge-rejected'
+    };
+    return map[status] || 'badge-draft';
+  };
+
+  window.getPriorityBadgeClass = function (priority) {
+    var map = {
+      'high': 'badge-high',
+      'medium': 'badge-medium',
+      'low': 'badge-low'
+    };
+    return map[priority] || 'badge-normal';
+  };
 })();

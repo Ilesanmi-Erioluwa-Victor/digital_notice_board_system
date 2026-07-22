@@ -146,6 +146,134 @@
   font-size: 1.5rem;
 }
 
+/* ─── Analytics Page ───────────────────────────────────── */
+
+.analytics-summary {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .analytics-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .analytics-summary {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ─── Toggle / Switch Buttons ──────────────────────────── */
+
+.toggle-group {
+  display: inline-flex;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.toggle-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.toggle-btn:not(:last-child) {
+  border-right: 1px solid var(--color-border);
+}
+
+.toggle-btn:hover {
+  background: var(--color-background);
+}
+
+.toggle-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* ─── Approve / Reject Buttons ─────────────────────────── */
+
+.btn-approve {
+  background: var(--color-success);
+  color: #fff;
+}
+
+.btn-approve:hover {
+  background: #15803d;
+  color: #fff;
+}
+
+.btn-reject {
+  background: var(--color-urgent);
+  color: #fff;
+}
+
+.btn-reject:hover {
+  background: #b91c1c;
+  color: #fff;
+}
+
+/* ─── Pending Notice Indicator ─────────────────────────── */
+
+.pending-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #92400e;
+  background: #fffbeb;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-weight: 500;
+}
+
+.pending-indicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #eab308;
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ─── Target Audience Form ────────────────────────────── */
+
+.audience-field-group {
+  padding: 1rem;
+  background: var(--color-background);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  margin-bottom: 1rem;
+}
+
+.audience-field-group .form-row {
+  margin-bottom: 0;
+}
+
+/* ─── Profile Edit Page (Admin) ───────────────────────── */
+
+.profile-edit-wrapper {
+  max-width: 600px;
+}
+
+.profile-edit-wrapper .profile-section {
+  margin-bottom: 1.5rem;
+}
+
 /* ─── Responsive Admin ─────────────────────────────────── */
 
 @media (max-width: 639px) {

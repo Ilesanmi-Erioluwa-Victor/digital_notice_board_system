@@ -1,26 +1,9 @@
 <?php
-/**
- * Auth — Session/Authentication Helper
- *
- * Manages user login/logout, session state, role-based access control,
- * and CSRF token generation/validation.
- *
- * All POST/DELETE state-changing endpoints must validate the CSRF token
- * before processing.
- */
 
 namespace App\Core;
 
 class Auth
 {
-    /**
-     * Attempt to authenticate a user by email and password.
-     * Uses password_verify() to check the hashed password.
-     *
-     * @param string $email
-     * @param string $password
-     * @return bool True on successful login
-     */
     public static function login(string $email, string $password): bool
     {
         $db = Database::getInstance();
@@ -33,7 +16,6 @@ class Auth
             return false;
         }
 
-        // Regenerate session ID to prevent session fixation
         session_regenerate_id(true);
 
         $_SESSION['user_id']    = (int) $user['id'];
@@ -41,7 +23,6 @@ class Auth
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['user_role']  = $user['role'];
 
-        // Update the session secret from config
         if (defined('SESSION_SECRET')) {
             $_SESSION['auth_secret'] = SESSION_SECRET;
         }
@@ -49,9 +30,6 @@ class Auth
         return true;
     }
 
-    /**
-     * Destroy the current session and log the user out.
-     */
     public static function logout(): void
     {
         $_SESSION = [];
@@ -70,21 +48,11 @@ class Auth
         session_destroy();
     }
 
-    /**
-     * Check if a user is currently logged in.
-     *
-     * @return bool
-     */
     public static function isLoggedIn(): bool
     {
         return isset($_SESSION['user_id']);
     }
 
-    /**
-     * Get the currently logged-in user's data from session.
-     *
-     * @return array|null Associative array with keys: id, name, email, role
-     */
     public static function currentUser(): ?array
     {
         if (!self::isLoggedIn()) {
@@ -99,13 +67,6 @@ class Auth
         ];
     }
 
-    /**
-     * Require authentication. If not logged in, redirect to login page.
-     * If $allowedRoles is provided, also check that the user has one of
-     * the specified roles.
-     *
-     * @param array $allowedRoles e.g., ['super_admin', 'admin']
-     */
     public static function requireAuth(array $allowedRoles = []): void
     {
         if (!self::isLoggedIn()) {
@@ -116,7 +77,6 @@ class Auth
         if (!empty($allowedRoles)) {
             $user = self::currentUser();
             if (!in_array($user['role'], $allowedRoles, true)) {
-                // Unauthorized — redirect with error
                 http_response_code(403);
                 header('Location: /?error=unauthorized');
                 exit;
@@ -124,11 +84,6 @@ class Auth
         }
     }
 
-    /**
-     * Generate a CSRF token and store it in the session.
-     *
-     * @return string The generated token
-     */
     public static function generateCsrfToken(): string
     {
         $token = bin2hex(random_bytes(32));
@@ -136,11 +91,6 @@ class Auth
         return $token;
     }
 
-    /**
-     * Retrieve the current CSRF token from session (generates one if missing).
-     *
-     * @return string
-     */
     public static function getCsrfToken(): string
     {
         if (empty($_SESSION['csrf_token'])) {
@@ -149,13 +99,6 @@ class Auth
         return $_SESSION['csrf_token'];
     }
 
-    /**
-     * Validate a CSRF token against the one stored in the session.
-     * Compares using hash_equals() to prevent timing attacks.
-     *
-     * @param string $token The token submitted with the form
-     * @return bool
-     */
     public static function validateCsrfToken(string $token): bool
     {
         if (empty($_SESSION['csrf_token']) || empty($token)) {
@@ -164,15 +107,62 @@ class Auth
         return hash_equals($_SESSION['csrf_token'], $token);
     }
 
-    /**
-     * Check if the current user has a specific role.
-     *
-     * @param string $role
-     * @return bool
-     */
     public static function hasRole(string $role): bool
     {
         $user = self::currentUser();
         return $user && $user['role'] === $role;
+    }
+
+    public static function hasAnyRole(array $roles): bool
+    {
+        $user = self::currentUser();
+        if (!$user) {
+            return false;
+        }
+        return in_array($user['role'], $roles, true);
+    }
+
+    public static function getUserPermissions(): array
+    {
+        $user = self::currentUser();
+        if (!$user) {
+            return [];
+        }
+
+        return match ($user['role']) {
+            'admin' => [
+                'notices.create',
+                'notices.edit',
+                'notices.delete',
+                'notices.approve',
+                'notices.reject',
+                'notices.pin',
+                'notices.duplicate',
+                'notices.view-all',
+                'notices.bookmark',
+                'users.manage',
+                'categories.manage',
+                'faculties.manage',
+                'departments.manage',
+                'programmes.manage',
+                'levels.manage',
+                'reports.view',
+                'reports.generate',
+                'analytics.view',
+                'activity-log.view',
+            ],
+            'staff' => [
+                'notices.create',
+                'notices.edit',
+                'notices.delete',
+                'notices.view-all',
+                'notices.bookmark',
+            ],
+            'student' => [
+                'notices.view',
+                'notices.bookmark',
+            ],
+            default => [],
+        };
     }
 }
