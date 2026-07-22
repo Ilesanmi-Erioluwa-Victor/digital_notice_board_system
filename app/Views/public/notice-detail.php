@@ -89,10 +89,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var btn = document.getElementById('detail-bookmark-btn');
     if (btn) {
         btn.addEventListener('click', function () {
+            if (this.classList.contains('btn-loading')) return;
             var id = this.getAttribute('data-notice-id');
             var csrf = document.querySelector('meta[name="csrf-token"]');
             var token = csrf ? csrf.getAttribute('content') : '';
             var self = this;
+            self.classList.add('btn-loading');
+            self.disabled = true;
+            var orig = self.innerHTML;
+            self.innerHTML = '<span class="spinner"></span>';
             fetch('/api/notices/bookmark/' + id, {
                 method: 'POST',
                 headers: {
@@ -103,6 +108,9 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(function (r) { return r.json(); })
             .then(function (data) {
+                self.classList.remove('btn-loading');
+                self.disabled = false;
+                self.innerHTML = orig;
                 if (data.bookmarked) {
                     self.innerHTML = '&#9733;';
                     self.setAttribute('data-bookmarked', 'true');
@@ -111,7 +119,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     self.setAttribute('data-bookmarked', 'false');
                 }
             })
-            .catch(function () {});
+            .catch(function () {
+                self.classList.remove('btn-loading');
+                self.disabled = false;
+                self.innerHTML = orig;
+            });
         });
     }
 });

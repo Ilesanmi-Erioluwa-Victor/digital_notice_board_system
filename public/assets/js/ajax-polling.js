@@ -108,10 +108,15 @@
 
     document.querySelectorAll('.bookmark-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
+        if (this.classList.contains('btn-loading')) return;
         var id = this.getAttribute('data-notice-id');
         var meta = document.querySelector('meta[name="csrf-token"]');
         var token = meta ? meta.getAttribute('content') : '';
         var self = this;
+        self.classList.add('btn-loading');
+        self.disabled = true;
+        var orig = self.innerHTML;
+        self.innerHTML = '<span class="spinner"></span>';
         fetch('/api/notices/bookmark/' + id, {
           method: 'POST',
           headers: {
@@ -122,6 +127,9 @@
         })
         .then(function (r) { return r.json(); })
         .then(function (data) {
+          self.classList.remove('btn-loading');
+          self.disabled = false;
+          self.innerHTML = orig;
           if (data.bookmarked) {
             self.innerHTML = '&#9733;';
             self.setAttribute('data-bookmarked', 'true');
@@ -130,7 +138,11 @@
             self.setAttribute('data-bookmarked', 'false');
           }
         })
-        .catch(function () {});
+        .catch(function () {
+          self.classList.remove('btn-loading');
+          self.disabled = false;
+          self.innerHTML = orig;
+        });
       });
     });
   }

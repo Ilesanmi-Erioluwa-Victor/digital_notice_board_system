@@ -30,9 +30,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     document.querySelectorAll('.bookmark-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
+            if (this.classList.contains('btn-loading')) return;
             var id = this.getAttribute('data-notice-id');
             var token = csrfToken();
             var self = this;
+            self.classList.add('btn-loading');
+            self.disabled = true;
+            var orig = self.innerHTML;
+            self.innerHTML = '<span class="spinner"></span>';
             fetch('/api/notices/bookmark/' + id, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': token},
@@ -40,6 +45,9 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(function (r) { return r.json(); })
             .then(function (data) {
+                self.classList.remove('btn-loading');
+                self.disabled = false;
+                self.innerHTML = orig;
                 if (!data.bookmarked) {
                     var card = self.closest('.notice-card');
                     card.style.transition = 'opacity 0.3s ease';
@@ -47,7 +55,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     setTimeout(function () { card.remove(); }, 300);
                 }
             })
-            .catch(function () {});
+            .catch(function () {
+                self.classList.remove('btn-loading');
+                self.disabled = false;
+                self.innerHTML = orig;
+            });
+        });
         });
     });
 });

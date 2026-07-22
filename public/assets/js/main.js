@@ -5,7 +5,6 @@
  * - Hamburger menu toggle for mobile navigation
  * - Toast notification system
  * - CSRF token injection for AJAX requests
- * - Dark mode toggle
  * - Bookmark toggle
  * - Notice status/priority CSS classes
  */
@@ -138,40 +137,27 @@
     });
   });
 
-  // ─── Dark Mode Toggle ─────────────────────────────────────────────────────
-
-  (function() {
-    var toggle = document.getElementById('dark-mode-toggle');
-    var html = document.documentElement;
-
-    if (localStorage.getItem('darkMode') === 'enabled') {
-      html.classList.add('dark-mode');
-    }
-
-    if (toggle) {
-      toggle.addEventListener('click', function() {
-        html.classList.toggle('dark-mode');
-        localStorage.setItem('darkMode',
-          html.classList.contains('dark-mode') ? 'enabled' : 'disabled'
-        );
-      });
-    }
-  })();
-
   // ─── Bookmark Toggle ──────────────────────────────────────────────────────
 
   document.addEventListener('click', function (e) {
     var btn = e.target.closest('.bookmark-btn');
-    if (!btn) return;
-
+    if (!btn || btn.classList.contains('btn-loading')) return;
     var noticeId = btn.getAttribute('data-notice-id');
     if (!noticeId) return;
+
+    btn.classList.add('btn-loading');
+    btn.disabled = true;
+    var origHTML = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner"></span>';
 
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/notices/bookmark/' + noticeId, true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.setRequestHeader('X-CSRF-TOKEN', getCsrfToken());
     xhr.onload = function () {
+      btn.classList.remove('btn-loading');
+      btn.disabled = false;
+      btn.innerHTML = origHTML;
       if (xhr.status >= 200 && xhr.status < 300) {
         btn.classList.toggle('active');
         showToast(btn.classList.contains('active') ? 'Bookmarked' : 'Bookmark removed', 'success');
@@ -180,6 +166,9 @@
       }
     };
     xhr.onerror = function () {
+      btn.classList.remove('btn-loading');
+      btn.disabled = false;
+      btn.innerHTML = origHTML;
       showToast('Network error', 'error');
     };
     xhr.send('_token=' + encodeURIComponent(getCsrfToken()));
