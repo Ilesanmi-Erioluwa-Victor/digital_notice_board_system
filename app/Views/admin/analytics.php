@@ -34,9 +34,15 @@ document.addEventListener('DOMContentLoaded', function() {
         html += '</div>';
         el.innerHTML = html;
     }
-    fetchJson('/api/analytics/monthly').then(function(d) { renderBarChart('monthly-chart', d, 'month', 'count'); });
-    fetchJson('/api/analytics/categories').then(function(d) { renderBarChart('category-chart', d, 'name', 'count'); });
+    fetchJson('/api/analytics/summary').then(function(d) {
+        document.getElementById('stat-total').textContent = d.totalNotices;
+        document.getElementById('stat-views').textContent = d.totalViews;
+        document.getElementById('stat-active').textContent = d.activeUsers;
+        document.getElementById('stat-categories').textContent = d.categories;
+    });
+    fetchJson('/api/analytics/monthly').then(function(d) { renderBarChart('monthly-chart', d, 'month', 'total'); });
+    fetchJson('/api/analytics/categories').then(function(d) { renderBarChart('category-chart', d, 'category', 'count'); });
     fetchJson('/api/analytics/status-breakdown').then(function(d) { renderBarChart('status-chart', d, 'status', 'count'); });
-    fetchJson('/api/analytics/most-viewed').then(function(d) { renderBarChart('most-viewed-chart', d, 'title', 'views'); });
+    fetchJson('/api/analytics/most-viewed').then(function(d) { renderBarChart('most-viewed-chart', d, 'title', 'view_count'); });
 });
 </script>

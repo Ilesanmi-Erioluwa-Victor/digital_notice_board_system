@@ -88,4 +88,24 @@ class AnalyticsController
 
         echo json_encode($rows);
     }
+
+    public function apiSummary(array $params = []): void
+    {
+        Auth::requireAuth(['admin']);
+        header('Content-Type: application/json');
+
+        $db = Database::getInstance();
+
+        $totalNotices  = (int) ($db->fetchOne('SELECT COUNT(*) AS c FROM notices')['c'] ?? 0);
+        $totalViews    = (int) ($db->fetchOne('SELECT COUNT(*) AS c FROM notice_views')['c'] ?? 0);
+        $activeUsers   = (int) ($db->fetchOne("SELECT COUNT(*) AS c FROM users WHERE is_active = TRUE")['c'] ?? 0);
+        $categories    = (int) ($db->fetchOne('SELECT COUNT(*) AS c FROM categories')['c'] ?? 0);
+
+        echo json_encode([
+            'totalNotices' => $totalNotices,
+            'totalViews'   => $totalViews,
+            'activeUsers'  => $activeUsers,
+            'categories'   => $categories,
+        ]);
+    }
 }

@@ -33,5 +33,6 @@ $router->add('GET', '/api/analytics/monthly', 'AnalyticsController@apiMonthlyNot
 $router->add('GET', '/api/analytics/categories', 'AnalyticsController@apiCategoryDistribution');
 $router->add('GET', '/api/analytics/most-viewed', 'AnalyticsController@apiMostViewed');
 $router->add('GET', '/api/analytics/status-breakdown', 'AnalyticsController@apiStatusBreakdown');
+$router->add('GET', '/api/analytics/summary', 'AnalyticsController@apiSummary');
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
