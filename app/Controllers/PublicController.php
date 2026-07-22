@@ -27,12 +27,38 @@ class PublicController
     {
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = 12;
+        $categoryId = !empty($_GET['category']) ? (int) $_GET['category'] : null;
+        $search = trim($_GET['search'] ?? '');
         $user = Auth::isLoggedIn() ? Auth::currentUser() : null;
 
+        if ($search) {
+            $notices = $this->noticeModel->search($search);
+            $allNotices = $notices;
+            $pinnedNotices = [];
+            $regularNotices = $notices;
+            $bookmarkedIds = [];
+            if ($user) {
+                $archivedModel = new ArchivedNotice();
+                $archivedIds = $archivedModel->getArchivedIds((int) $user['id']);
+                $regularNotices = array_filter($regularNotices, function ($n) use ($archivedIds) {
+                    return !in_array((int) $n['id'], $archivedIds, true);
+                });
+                $bookmarkModel = new Bookmark();
+                $userBookmarks = $bookmarkModel->getByUser((int) $user['id']);
+                $bookmarkedIds = array_map(function ($b) { return (int) $b['notice_id']; }, $userBookmarks);
+            }
+            $categories = $this->categoryModel->all();
+            $result = ['total' => count($regularNotices), 'pages' => 1, 'page' => 1];
+            require __DIR__ . '/../Views/layouts/header.php';
+            require __DIR__ . '/../Views/public/home.php';
+            require __DIR__ . '/../Views/layouts/footer.php';
+            return;
+        }
+
         if ($user) {
-            $result = $this->noticeModel->getByAudiencePaginated($user['role'], [], $page, $perPage);
+            $result = $this->noticeModel->getByAudiencePaginated($user['role'], [], $page, $perPage, $categoryId);
         } else {
-            $result = $this->noticeModel->getActivePaginated($page, $perPage);
+            $result = $this->noticeModel->getActivePaginated($page, $perPage, $categoryId);
         }
 
         $allNotices = $result['notices'];

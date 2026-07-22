@@ -285,30 +285,36 @@ class Notice
         ];
     }
 
-    public function getActivePaginated(int $page = 1, int $perPage = 12): array
+    public function getActivePaginated(int $page = 1, int $perPage = 12, ?int $categoryId = null): array
     {
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
 
-        $countResult = $this->db->fetchOne(
-            "SELECT COUNT(*) AS total FROM notices
-             WHERE status IN ('approved', 'published')
+        $where = "status IN ('approved', 'published')
                AND publish_at <= NOW()
-               AND (expires_at IS NULL OR expires_at > NOW())"
+               AND (expires_at IS NULL OR expires_at > NOW())";
+        $params = ['limit' => $perPage, 'offset' => $offset];
+
+        if ($categoryId) {
+            $where .= ' AND category_id = :category_id';
+            $params['category_id'] = $categoryId;
+        }
+
+        $countResult = $this->db->fetchOne(
+            "SELECT COUNT(*) AS total FROM notices WHERE $where",
+            array_diff_key($params, ['limit' => true, 'offset' => true])
         );
         $total = (int) ($countResult['total'] ?? 0);
 
         $notices = $this->db->fetchAll(
-            'SELECT n.*, c.name AS category_name, u.name AS author_name
+            "SELECT n.*, c.name AS category_name, u.name AS author_name
              FROM notices n
              LEFT JOIN categories c ON n.category_id = c.id
              LEFT JOIN users u ON n.posted_by = u.id
-             WHERE n.status IN (\'approved\', \'published\')
-               AND n.publish_at <= NOW()
-               AND (n.expires_at IS NULL OR n.expires_at > NOW())
+             WHERE $where
              ORDER BY n.is_pinned DESC, n.priority DESC, n.created_at DESC
-             LIMIT :limit OFFSET :offset',
-            ['limit' => $perPage, 'offset' => $offset]
+             LIMIT :limit OFFSET :offset",
+            $params
         );
 
         return [
@@ -319,13 +325,16 @@ class Notice
         ];
     }
 
-    public function getByAudiencePaginated(string $audienceType, array $targetIds = [], int $page = 1, int $perPage = 12): array
+    public function getByAudiencePaginated(string $audienceType, array $targetIds = [], int $page = 1, int $perPage = 12, ?int $categoryId = null): array
     {
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
 
+        $conditions = "(n.target_audience_type = :audience_type OR n.target_audience_type = 'everyone')
+               AND n.status IN ('approved', 'published')
+               AND n.publish_at <= NOW()
+               AND (n.expires_at IS NULL OR n.expires_at > NOW())";
         $params = ['audience_type' => $audienceType, 'limit' => $perPage, 'offset' => $offset];
-        $targetCondition = '';
 
         if (!empty($targetIds)) {
             $placeholders = [];
@@ -334,31 +343,29 @@ class Notice
                 $placeholders[] = ':' . $key;
                 $params[$key] = (int)$tid;
             }
-            $targetCondition = ' AND n.target_ids && ARRAY[' . implode(',', $placeholders) . ']';
+            $conditions .= ' AND n.target_ids && ARRAY[' . implode(',', $placeholders) . ']';
+        }
+
+        if ($categoryId) {
+            $conditions .= ' AND n.category_id = :category_id';
+            $params['category_id'] = $categoryId;
         }
 
         $countParams = array_diff_key($params, ['limit' => true, 'offset' => true]);
         $countResult = $this->db->fetchOne(
-            'SELECT COUNT(*) AS total FROM notices n
-             WHERE (n.target_audience_type = :audience_type OR n.target_audience_type = \'everyone\')
-               AND n.status IN (\'approved\', \'published\')
-               AND n.publish_at <= NOW()
-               AND (n.expires_at IS NULL OR n.expires_at > NOW())' . $targetCondition,
+            "SELECT COUNT(*) AS total FROM notices n WHERE $conditions",
             $countParams
         );
         $total = (int) ($countResult['total'] ?? 0);
 
         $notices = $this->db->fetchAll(
-            'SELECT n.*, c.name AS category_name, u.name AS author_name
+            "SELECT n.*, c.name AS category_name, u.name AS author_name
              FROM notices n
              LEFT JOIN categories c ON n.category_id = c.id
              LEFT JOIN users u ON n.posted_by = u.id
-             WHERE (n.target_audience_type = :audience_type OR n.target_audience_type = \'everyone\')
-               AND n.status IN (\'approved\', \'published\')
-               AND n.publish_at <= NOW()
-               AND (n.expires_at IS NULL OR n.expires_at > NOW())' . $targetCondition . '
+             WHERE $conditions
              ORDER BY n.is_pinned DESC, n.created_at DESC
-             LIMIT :limit OFFSET :offset',
+             LIMIT :limit OFFSET :offset",
             $params
         );
 
