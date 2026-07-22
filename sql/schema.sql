@@ -4,6 +4,24 @@
 -- Run: psql -d digital_notice_board -f sql/schema.sql
 -- ==========================================================================
 
+-- Drop all existing tables to ensure a clean slate (order matters for FK deps)
+DROP TABLE IF EXISTS
+    password_resets,
+    notifications,
+    bookmarks,
+    notice_views,
+    notice_attachments,
+    activity_logs,
+    notices,
+    categories,
+    users,
+    levels,
+    programmes,
+    departments,
+    faculties,
+    roles
+CASCADE;
+
 -- ─── Roles Table ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS roles (
     id SERIAL PRIMARY KEY,
