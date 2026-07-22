@@ -17,7 +17,7 @@ $adminCssVersion = file_exists($docRoot . '/assets/css/admin.css') ? filemtime($
 ?>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/style.css?v=<?= $cssVersion ?>">
-    <?php if (strpos($_SERVER['REQUEST_URI'] ?? '', '/admin') === 0): ?>
+    <?php if (strpos($_SERVER['REQUEST_URI'] ?? '', '/admin') === 0 || strpos($_SERVER['REQUEST_URI'] ?? '', '/profile') === 0): ?>
     <link rel="stylesheet" href="/assets/css/admin.css?v=<?= $adminCssVersion ?>">
     <?php endif; ?>
     <style>
@@ -39,6 +39,10 @@ $adminCssVersion = file_exists($docRoot . '/assets/css/admin.css') ? filemtime($
                         <a href="/admin/dashboard">Admin</a>
                         <a href="/admin/notices">My Notices</a>
                         <a href="/admin/notices/create">Submit Notice</a>
+                    <?php endif; ?>
+                    <?php if (\App\Core\Auth::isLoggedIn()): ?>
+                        <a href="/bookmarks">Bookmarks</a>
+                        <a href="/archived">Archived</a>
                     <?php endif; ?>
                     <button id="dark-mode-toggle" aria-label="Toggle dark mode">&#9790;</button>
                     <form method="POST" action="/logout" style="display:inline;">

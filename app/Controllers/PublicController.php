@@ -103,4 +103,28 @@ class PublicController
     {
         require __DIR__ . '/../Views/public/kiosk.php';
     }
+
+    public function bookmarks(array $params = []): void
+    {
+        Auth::requireAuth();
+        $user = Auth::currentUser();
+        $bookmarkModel = new Bookmark();
+        $bookmarks = $bookmarkModel->getByUser((int) $user['id']);
+
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/public/bookmarks.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
+    }
+
+    public function archived(array $params = []): void
+    {
+        Auth::requireAuth();
+        $user = Auth::currentUser();
+        $archivedModel = new ArchivedNotice();
+        $archived = $archivedModel->getByUser((int) $user['id']);
+
+        require __DIR__ . '/../Views/layouts/header.php';
+        require __DIR__ . '/../Views/public/archived.php';
+        require __DIR__ . '/../Views/layouts/footer.php';
+    }
 }

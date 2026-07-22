@@ -17,6 +17,8 @@ $router->registerDefaultRoutes();
 
 // Additional routes not covered by defaults
 $router->add('GET', '/kiosk', 'PublicController@kiosk');
+$router->add('GET', '/bookmarks', 'PublicController@bookmarks');
+$router->add('GET', '/archived', 'PublicController@archived');
 $router->add('GET', '/admin/users/role/{id}', 'UserController@updateRole');
 $router->add('POST', '/admin/users/toggle-active/{id}', 'UserController@toggleActive');
 $router->add('GET', '/admin/logs', 'ActivityLogController@index');
