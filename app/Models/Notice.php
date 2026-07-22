@@ -28,7 +28,7 @@ class Notice
                 'approval_status'     => $data['approval_status'] ?? 'none',
                 'approved_by'         => $data['approved_by'] ?? null,
                 'rejection_reason'    => $data['rejection_reason'] ?? null,
-                'is_pinned'           => $data['is_pinned'] ?? false,
+                'is_pinned'           => !empty($data['is_pinned']) ? 1 : 0,
                 'target_audience_type' => $data['target_audience_type'] ?? 'everyone',
                 'target_ids'          => isset($data['target_ids']) ? '{' . implode(',', array_map('intval', (array)$data['target_ids'])) . '}' : '{}',
                 'publish_at'          => $data['publish_at'] ?? null,
@@ -43,12 +43,17 @@ class Notice
         $fields = [];
         $params = ['id' => $id];
 
-        $allowed = ['title', 'body', 'category_id', 'priority', 'status', 'approval_status', 'approved_by', 'rejection_reason', 'is_pinned', 'target_audience_type', 'publish_at', 'expires_at'];
+        $allowed = ['title', 'body', 'category_id', 'priority', 'status', 'approval_status', 'approved_by', 'rejection_reason', 'target_audience_type', 'publish_at', 'expires_at'];
         foreach ($allowed as $field) {
             if (array_key_exists($field, $data)) {
                 $fields[] = "$field = :$field";
                 $params[$field] = $data[$field];
             }
+        }
+
+        if (array_key_exists('is_pinned', $data)) {
+            $fields[] = 'is_pinned = :is_pinned';
+            $params['is_pinned'] = !empty($data['is_pinned']) ? 1 : 0;
         }
 
         if (array_key_exists('target_ids', $data)) {
