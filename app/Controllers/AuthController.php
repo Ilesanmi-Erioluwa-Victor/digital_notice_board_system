@@ -58,7 +58,7 @@ class AuthController
     public function registerForm(array $params = []): void
     {
         require __DIR__ . '/../Views/layouts/header.php';
-        echo '<div class="container"><h1>Register</h1><p>Self-registration is available for student accounts only.</p></div>';
+        require __DIR__ . '/../Views/public/register.php';
         require __DIR__ . '/../Views/layouts/footer.php';
     }
 
@@ -71,12 +71,22 @@ class AuthController
             exit;
         }
 
-        $name     = trim($_POST['name'] ?? '');
-        $email    = trim($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
+        $name        = trim($_POST['name'] ?? '');
+        $email       = trim($_POST['email'] ?? '');
+        $password    = $_POST['password'] ?? '';
+        $studentId   = trim($_POST['student_id'] ?? '');
+        $departmentId = !empty($_POST['department_id']) ? (int) $_POST['department_id'] : null;
+        $programmeId = !empty($_POST['programme_id']) ? (int) $_POST['programme_id'] : null;
+        $levelId     = !empty($_POST['level_id']) ? (int) $_POST['level_id'] : null;
 
         if (!$name || !$email || !$password) {
-            $_SESSION['error'] = 'All fields are required.';
+            $_SESSION['error'] = 'Name, email, and password are required.';
+            header('Location: /register');
+            exit;
+        }
+
+        if (strlen($password) < 6) {
+            $_SESSION['error'] = 'Password must be at least 6 characters.';
             header('Location: /register');
             exit;
         }
@@ -90,12 +100,17 @@ class AuthController
         }
 
         $userModel->create([
-            'name'     => $name,
-            'email'    => $email,
-            'password' => $password,
-            'role'     => 'student',
+            'name'           => $name,
+            'email'          => $email,
+            'password'       => $password,
+            'role'           => 'student',
+            'student_id'     => $studentId ?: null,
+            'department_id'  => $departmentId,
+            'programme_id'   => $programmeId,
+            'level_id'       => $levelId,
         ]);
         Auth::login($email, $password);
+        $_SESSION['success'] = 'Account created successfully. Welcome!';
         header('Location: /');
         exit;
     }

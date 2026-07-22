@@ -31,6 +31,10 @@
             <p class="text-center text-muted mt-2" style="font-size:0.85rem;">
                 Demo: admin@example.com / password123
             </p>
+
+            <p class="text-center mt-2" style="font-size:0.85rem;">
+                Don't have an account? <a href="/register">Create one</a>
+            </p>
         </div>
     </div>
 </div>
