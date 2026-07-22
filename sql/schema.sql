@@ -140,9 +140,14 @@ CREATE TABLE IF NOT EXISTS notice_views (
     id SERIAL PRIMARY KEY,
     notice_id INTEGER REFERENCES notices(id) ON DELETE CASCADE,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    viewed_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(notice_id, user_id)
+    visitor_ip VARCHAR(45),
+    viewed_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_notice_views_logged_in 
+    ON notice_views(notice_id, user_id) WHERE user_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_notice_views_guest 
+    ON notice_views(notice_id, visitor_ip) WHERE visitor_ip IS NOT NULL;
 
 -- ─── Bookmarks Table ──────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS bookmarks (

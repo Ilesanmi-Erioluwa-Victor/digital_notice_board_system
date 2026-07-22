@@ -60,11 +60,17 @@ class PublicController
 
         $isBookmarked = false;
         $user = Auth::currentUser();
+        $viewModel = new NoticeView();
         if ($user) {
-            $viewModel = new NoticeView();
-            $viewModel->trackView($id, $user['id']);
+            $viewModel->trackView($id, (int) $user['id']);
             $bookmarkModel = new Bookmark();
             $isBookmarked = $bookmarkModel->isBookmarked($user['id'], $id);
+        } else {
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+            try {
+                $viewModel->trackView($id, null, $ip);
+            } catch (\Throwable $e) {
+            }
         }
 
         $attachments = $this->attachmentModel->findByNoticeId($id);

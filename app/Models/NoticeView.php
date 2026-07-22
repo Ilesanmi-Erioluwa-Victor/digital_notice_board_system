@@ -13,24 +13,39 @@ class NoticeView
         $this->db = Database::getInstance();
     }
 
-    public function trackView(int $noticeId, int $userId): int
+    public function trackView(int $noticeId, ?int $userId = null, ?string $visitorIp = null): int
     {
-        $existing = $this->db->fetchOne(
-            'SELECT id FROM notice_views WHERE notice_id = :notice_id AND user_id = :user_id',
-            ['notice_id' => $noticeId, 'user_id' => $userId]
-        );
-
-        if ($existing) {
-            return $this->db->execute(
-                'UPDATE notice_views SET viewed_at = NOW() WHERE id = :id',
-                ['id' => $existing['id']]
+        if ($userId !== null) {
+            $existing = $this->db->fetchOne(
+                'SELECT id FROM notice_views WHERE notice_id = :notice_id AND user_id = :user_id',
+                ['notice_id' => $noticeId, 'user_id' => $userId]
+            );
+            if ($existing) {
+                return $this->db->execute(
+                    'UPDATE notice_views SET viewed_at = NOW() WHERE id = :id',
+                    ['id' => $existing['id']]
+                );
+            }
+            $this->db->execute(
+                'INSERT INTO notice_views (notice_id, user_id) VALUES (:notice_id, :user_id)',
+                ['notice_id' => $noticeId, 'user_id' => $userId]
+            );
+        } elseif ($visitorIp !== null) {
+            $existing = $this->db->fetchOne(
+                'SELECT id FROM notice_views WHERE notice_id = :notice_id AND visitor_ip = :ip',
+                ['notice_id' => $noticeId, 'ip' => $visitorIp]
+            );
+            if ($existing) {
+                return $this->db->execute(
+                    'UPDATE notice_views SET viewed_at = NOW() WHERE id = :id',
+                    ['id' => $existing['id']]
+                );
+            }
+            $this->db->execute(
+                'INSERT INTO notice_views (notice_id, visitor_ip) VALUES (:notice_id, :ip)',
+                ['notice_id' => $noticeId, 'ip' => $visitorIp]
             );
         }
-
-        $this->db->execute(
-            'INSERT INTO notice_views (notice_id, user_id) VALUES (:notice_id, :user_id)',
-            ['notice_id' => $noticeId, 'user_id' => $userId]
-        );
         return (int) $this->db->lastInsertId('notice_views_id_seq');
     }
 

@@ -386,6 +386,12 @@ class NoticeController
         $user = Auth::currentUser();
         if ($user) {
             $this->noticeViewModel->trackView($id, (int) $user['id']);
+        } else {
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+            try {
+                $this->noticeViewModel->trackView($id, null, $ip);
+            } catch (\Throwable $e) {
+            }
         }
 
         $attachments  = $this->attachmentModel->findByNoticeId($id);

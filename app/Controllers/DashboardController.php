@@ -50,6 +50,8 @@ class DashboardController
 
         $totalUsers = (int) ($db->fetchOne('SELECT COUNT(*) AS count FROM users')['count'] ?? 0);
 
+        $totalViews = (int) ($db->fetchOne('SELECT COUNT(*) AS count FROM notice_views')['count'] ?? 0);
+
         $recentLogs = $this->logModel->getRecent(10);
 
         $recentNotices = $db->fetchAll(
@@ -113,6 +115,8 @@ class DashboardController
         $totalCategories = (int) ($db->fetchOne('SELECT COUNT(*) AS count FROM categories')['count'] ?? 0);
 
         $totalUsers = (int) ($db->fetchOne('SELECT COUNT(*) AS count FROM users')['count'] ?? 0);
+
+        $totalViews = (int) ($db->fetchOne('SELECT COUNT(*) AS count FROM notice_views')['count'] ?? 0);
 
         $recentLogs = $this->logModel->getRecent(10);
 
