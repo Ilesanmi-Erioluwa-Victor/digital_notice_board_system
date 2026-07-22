@@ -33,6 +33,7 @@ define('MAIL_USER', $_ENV['MAIL_USER'] ?? '');
 define('MAIL_PASSWORD', $_ENV['MAIL_PASSWORD'] ?? '');
 
 // Application settings
+define('UPLOAD_DIR', $_ENV['UPLOAD_DIR'] ?? __DIR__ . '/../public/assets/uploads');
 define('UPLOAD_MAX_SIZE', 5 * 1024 * 1024); // 5 MB
 define('ALLOWED_FILE_TYPES', ['pdf', 'jpg', 'png']);
 define('AJAX_POLL_INTERVAL', 30000); // 30 seconds

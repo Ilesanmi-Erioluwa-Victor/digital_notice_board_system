@@ -543,16 +543,19 @@ class NoticeController
             return false;
         }
 
-        $uploadDir = __DIR__ . '/../../public/assets/uploads/';
+        $uploadDir = defined('UPLOAD_DIR') ? UPLOAD_DIR : __DIR__ . '/../../public/assets/uploads/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
 
         $filename = uniqid('notice_') . '.' . $ext;
-        $destPath = $uploadDir . $filename;
+        $destPath = rtrim($uploadDir, '/') . '/' . $filename;
 
         if (move_uploaded_file($file['tmp_name'], $destPath)) {
             $this->attachmentModel->create(
+                $noticeId,
+                $file['name'],
+                'assets/uploads/' . $filename,
                 $noticeId,
                 $file['name'],
                 'assets/uploads/' . $filename,
