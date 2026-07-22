@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-(function(){var d=localStorage.getItem('dark-mode');if(d==='true'){document.documentElement.classList.add('dark-mode')}else{document.documentElement.classList.remove('dark-mode')}})();
+(function(){if(localStorage.getItem('dark-mode')==='true')document.documentElement.classList.add('dark-mode')})();
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -76,5 +76,5 @@ $adminCssVersion = file_exists($docRoot . '/assets/css/admin.css') ? filemtime($
         <div id="toast-container" class="toast-container"></div>
         <div class="container">
 <script>
-(function(){var b=document.getElementById('dark-mode-toggle');function u(){var d=localStorage.getItem('dark-mode')==='true';document.documentElement.classList.toggle('dark-mode',d);if(b)b.innerHTML=d?'&#9728;':'&#9790;'}if(b){b.addEventListener('click',function(){var n=localStorage.getItem('dark-mode')!=='true';localStorage.setItem('dark-mode',n?'true':'false');u()})}u()})();
+(function(){function s(v){localStorage.setItem('dark-mode',v);document.documentElement.classList.toggle('dark-mode',v==='true')}var b=document.getElementById('dark-mode-toggle');if(b){var d=localStorage.getItem('dark-mode');b.innerHTML=d==='true'?'&#9728;':'&#9790;';b.addEventListener('click',function(){var n=localStorage.getItem('dark-mode')==='true'?'false':'true';s(n);this.innerHTML=n==='true'?'&#9728;':'&#9790;'})}})();
 </script>
