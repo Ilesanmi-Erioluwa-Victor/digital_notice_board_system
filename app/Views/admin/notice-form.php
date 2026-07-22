@@ -66,10 +66,7 @@
                             <select id="status" name="status" class="form-control">
                                 <option value="draft" <?= ($notice['status'] ?? '') === 'draft' ? 'selected' : '' ?>>Draft</option>
                                 <option value="pending" <?= ($notice['status'] ?? '') === 'pending' ? 'selected' : '' ?>>Pending</option>
-                                <?php if (isset($isAdmin) && $isAdmin): ?>
-                                    <option value="approved" <?= ($notice['status'] ?? '') === 'approved' ? 'selected' : '' ?>>Approved</option>
-                                    <option value="published" <?= ($notice['status'] ?? '') === 'published' ? 'selected' : '' ?>>Published</option>
-                                <?php endif; ?>
+                                <option value="published" <?= ($notice['status'] ?? '') === 'published' ? 'selected' : '' ?>>Published</option>
                                 <option value="archived" <?= ($notice['status'] ?? '') === 'archived' ? 'selected' : '' ?>>Archived</option>
                             </select>
                         </div>

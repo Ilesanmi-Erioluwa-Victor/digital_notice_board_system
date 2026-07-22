@@ -128,6 +128,8 @@ class NoticeController
             echo 'Notice not found.';
             return;
         }
+        $user = Auth::currentUser();
+        $isAdmin = $user['role'] === 'admin';
         $categories = $this->categoryModel->all();
         $attachments = $this->attachmentModel->findByNoticeId($id);
         require __DIR__ . '/../Views/layouts/header.php';
@@ -164,7 +166,7 @@ class NoticeController
         }
 
         $user = Auth::currentUser();
-        if ($user['role'] === 'admin' && isset($_POST['status'])) {
+        if (isset($_POST['status'])) {
             $data['status'] = $_POST['status'];
         }
 
