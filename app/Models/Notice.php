@@ -285,6 +285,91 @@ class Notice
         ];
     }
 
+    public function getActivePaginated(int $page = 1, int $perPage = 12): array
+    {
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        $countResult = $this->db->fetchOne(
+            "SELECT COUNT(*) AS total FROM notices
+             WHERE status IN ('approved', 'published')
+               AND publish_at <= NOW()
+               AND (expires_at IS NULL OR expires_at > NOW())"
+        );
+        $total = (int) ($countResult['total'] ?? 0);
+
+        $notices = $this->db->fetchAll(
+            'SELECT n.*, c.name AS category_name, u.name AS author_name
+             FROM notices n
+             LEFT JOIN categories c ON n.category_id = c.id
+             LEFT JOIN users u ON n.posted_by = u.id
+             WHERE n.status IN (\'approved\', \'published\')
+               AND n.publish_at <= NOW()
+               AND (n.expires_at IS NULL OR n.expires_at > NOW())
+             ORDER BY n.is_pinned DESC, n.priority DESC, n.created_at DESC
+             LIMIT :limit OFFSET :offset',
+            ['limit' => $perPage, 'offset' => $offset]
+        );
+
+        return [
+            'notices' => $notices,
+            'total'   => $total,
+            'pages'   => (int) ceil($total / $perPage),
+            'page'    => $page,
+        ];
+    }
+
+    public function getByAudiencePaginated(string $audienceType, array $targetIds = [], int $page = 1, int $perPage = 12): array
+    {
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        $params = ['audience_type' => $audienceType, 'limit' => $perPage, 'offset' => $offset];
+        $targetCondition = '';
+
+        if (!empty($targetIds)) {
+            $placeholders = [];
+            foreach ($targetIds as $i => $tid) {
+                $key = 'tid_' . $i;
+                $placeholders[] = ':' . $key;
+                $params[$key] = (int)$tid;
+            }
+            $targetCondition = ' AND n.target_ids && ARRAY[' . implode(',', $placeholders) . ']';
+        }
+
+        $countParams = array_diff_key($params, ['limit' => true, 'offset' => true]);
+        $countResult = $this->db->fetchOne(
+            'SELECT COUNT(*) AS total FROM notices n
+             WHERE (n.target_audience_type = :audience_type OR n.target_audience_type = \'everyone\')
+               AND n.status IN (\'approved\', \'published\')
+               AND n.publish_at <= NOW()
+               AND (n.expires_at IS NULL OR n.expires_at > NOW())' . $targetCondition,
+            $countParams
+        );
+        $total = (int) ($countResult['total'] ?? 0);
+
+        $notices = $this->db->fetchAll(
+            'SELECT n.*, c.name AS category_name, u.name AS author_name
+             FROM notices n
+             LEFT JOIN categories c ON n.category_id = c.id
+             LEFT JOIN users u ON n.posted_by = u.id
+             WHERE (n.target_audience_type = :audience_type OR n.target_audience_type = \'everyone\')
+               AND n.status IN (\'approved\', \'published\')
+               AND n.publish_at <= NOW()
+               AND (n.expires_at IS NULL OR n.expires_at > NOW())' . $targetCondition . '
+             ORDER BY n.is_pinned DESC, n.created_at DESC
+             LIMIT :limit OFFSET :offset',
+            $params
+        );
+
+        return [
+            'notices' => $notices,
+            'total'   => $total,
+            'pages'   => (int) ceil($total / $perPage),
+            'page'    => $page,
+        ];
+    }
+
     public function getMostViewed(int $limit = 5): array
     {
         return $this->db->fetchAll(

@@ -9,6 +9,7 @@ use App\Models\Notice;
 use App\Models\NoticeAttachment;
 use App\Models\NoticeView;
 use App\Models\Bookmark;
+use App\Models\ArchivedNotice;
 use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Notification;
@@ -20,6 +21,7 @@ class NoticeController
     private NoticeAttachment $attachmentModel;
     private NoticeView $noticeViewModel;
     private Bookmark $bookmarkModel;
+    private ArchivedNotice $archivedNoticeModel;
     private ActivityLog $logModel;
     private Category $categoryModel;
     private Notification $notificationModel;
@@ -30,6 +32,7 @@ class NoticeController
         $this->attachmentModel   = new NoticeAttachment();
         $this->noticeViewModel   = new NoticeView();
         $this->bookmarkModel     = new Bookmark();
+        $this->archivedNoticeModel = new ArchivedNotice();
         $this->logModel          = new ActivityLog();
         $this->categoryModel     = new Category();
         $this->notificationModel = new Notification();
@@ -429,6 +432,38 @@ class NoticeController
         );
 
         echo json_encode(['bookmarked' => false]);
+    }
+
+    public function archive(array $params = []): void
+    {
+        header('Content-Type: application/json');
+        Auth::requireAuth();
+
+        $id   = (int) ($params['id'] ?? 0);
+        $user = Auth::currentUser();
+
+        $result = $this->archivedNoticeModel->toggle((int) $user['id'], $id);
+        echo json_encode(['archived' => $result['archived']]);
+    }
+
+    public function apiBookmarks(array $params = []): void
+    {
+        header('Content-Type: application/json');
+        Auth::requireAuth();
+
+        $user = Auth::currentUser();
+        $rows = $this->bookmarkModel->getByUser((int) $user['id']);
+        echo json_encode($rows);
+    }
+
+    public function apiArchived(array $params = []): void
+    {
+        header('Content-Type: application/json');
+        Auth::requireAuth();
+
+        $user = Auth::currentUser();
+        $rows = $this->archivedNoticeModel->getByUser((int) $user['id']);
+        echo json_encode($rows);
     }
 
     public function apiCalendar(array $params = []): void

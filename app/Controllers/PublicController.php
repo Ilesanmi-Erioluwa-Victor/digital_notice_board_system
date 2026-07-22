@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\NoticeAttachment;
 use App\Models\NoticeView;
 use App\Models\Bookmark;
+use App\Models\ArchivedNotice;
 
 class PublicController
 {
@@ -24,20 +25,39 @@ class PublicController
 
     public function index(array $params = []): void
     {
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $perPage = 12;
         $user = Auth::isLoggedIn() ? Auth::currentUser() : null;
 
         if ($user) {
-            $notices = $this->noticeModel->getByAudience($user['role'], []);
+            $result = $this->noticeModel->getByAudiencePaginated($user['role'], [], $page, $perPage);
         } else {
-            $notices = $this->noticeModel->getActive();
+            $result = $this->noticeModel->getActivePaginated($page, $perPage);
         }
 
-        $pinnedNotices = array_filter($notices, function ($n) {
+        $allNotices = $result['notices'];
+
+        if ($user) {
+            $archivedModel = new ArchivedNotice();
+            $archivedIds = $archivedModel->getArchivedIds((int) $user['id']);
+            $allNotices = array_filter($allNotices, function ($n) use ($archivedIds) {
+                return !in_array((int) $n['id'], $archivedIds, true);
+            });
+        }
+
+        $pinnedNotices = array_filter($allNotices, function ($n) {
             return !empty($n['is_pinned']);
         });
-        $regularNotices = array_filter($notices, function ($n) {
+        $regularNotices = array_filter($allNotices, function ($n) {
             return empty($n['is_pinned']);
         });
+
+        $bookmarkedIds = [];
+        if ($user) {
+            $bookmarkModel = new Bookmark();
+            $userBookmarks = $bookmarkModel->getByUser((int) $user['id']);
+            $bookmarkedIds = array_map(function ($b) { return (int) $b['notice_id']; }, $userBookmarks);
+        }
 
         $categories = $this->categoryModel->all();
 

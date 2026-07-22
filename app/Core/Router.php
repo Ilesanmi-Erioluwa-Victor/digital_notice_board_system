@@ -86,6 +86,9 @@ class Router
         $this->add('GET',    '/api/notices/calendar',        'NoticeController@apiCalendar');
         $this->add('POST',   '/api/notices/bookmark/{id}',   'NoticeController@bookmark');
         $this->add('DELETE', '/api/notices/bookmark/{id}',   'NoticeController@unbookmark');
+        $this->add('POST',   '/api/notices/archive/{id}',    'NoticeController@archive');
+        $this->add('GET',    '/api/notices/bookmarks',        'NoticeController@apiBookmarks');
+        $this->add('GET',    '/api/notices/archived',          'NoticeController@apiArchived');
 
         // Reports
         $this->add('GET',  '/admin/reports',           'ReportController@index');

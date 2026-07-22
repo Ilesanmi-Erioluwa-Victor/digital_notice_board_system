@@ -8,6 +8,7 @@
 DROP TABLE IF EXISTS
     password_resets,
     notifications,
+    archived_notices,
     bookmarks,
     notice_views,
     notice_attachments,
@@ -155,6 +156,15 @@ CREATE TABLE IF NOT EXISTS bookmarks (
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     notice_id INTEGER REFERENCES notices(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, notice_id)
+);
+
+-- ─── Archived Notices Table ─────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS archived_notices (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    notice_id INTEGER REFERENCES notices(id) ON DELETE CASCADE,
+    archived_at TIMESTAMP DEFAULT NOW(),
     UNIQUE(user_id, notice_id)
 );
 
